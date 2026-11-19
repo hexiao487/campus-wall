@@ -18,6 +18,20 @@ const ALLOWED = [
   'audio/aac'
 ];
 
+/** 按文件头识别真实格式，避免后缀/类型与实际内容不一致导致图片打不开 */
+function sniffType(buffer) {
+  const b = buffer;
+  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b.length > 8 && b.toString('ascii', 1, 4) === 'PNG') return 'image/png';
+  if (b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+  if (b.length > 6 && b.toString('ascii', 0, 3) === 'GIF') return 'image/gif';
+  if (b.length > 12 && b.toString('ascii', 4, 8) === 'ftyp') return 'audio/mp4';
+  if (b.length > 4 && b.toString('ascii', 0, 4) === 'OggS') return 'audio/ogg';
+  if (b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WAVE') return 'audio/wav';
+  if (b.length > 4 && b.toString('ascii', 0, 4) === 'fLaC') return 'audio/ogg';
+  return null;
+}
+
 /** 上传配图到 Supabase Storage */
 export async function POST(request) {
   try {
@@ -40,14 +54,17 @@ export async function POST(request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = (file.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+    // 以文件头为准：浏览器/安卓传上来的 png 常被标成 jpg，落库后就会显示成空白
+    const sniffed = sniffType(buffer);
+    const type = sniffed && ALLOWED.includes(sniffed) ? sniffed : file.type;
+    const ext = (type.split('/')[1] || 'jpg').replace('jpeg', 'jpg').replace('mpeg', 'mp3');
     const path = `${new Date().toISOString().slice(0, 10)}/${Date.now()}-${Math.random()
       .toString(36)
       .slice(2, 8)}.${ext}`;
 
     const supabase = getSupabase();
     const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
-      contentType: file.type,
+      contentType: type,
       upsert: false
     });
 
