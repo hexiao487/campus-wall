@@ -36,8 +36,10 @@ export default function GroupRoomPage() {
       const res = await fetch('/api/auth/me', { cache: 'no-store' });
       const data = await res.json();
       setMe(data.user || null);
+      return data.user || null;
     } catch {
       setMe(null);
+      return null;
     }
   }, []);
 
@@ -66,7 +68,11 @@ export default function GroupRoomPage() {
 
   useEffect(() => {
     (async () => {
-      await loadMe();
+      const user = await loadMe();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       await loadGroup();
     })();
   }, [loadMe, loadGroup]);
