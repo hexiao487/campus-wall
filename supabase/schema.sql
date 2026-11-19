@@ -14,6 +14,7 @@ create table if not exists public.users (
   is_muted      boolean not null default false,  -- 是否被禁言
   wechat_openid text unique,                     -- 微信开放平台 openid（扫码登录用）
   phone         text unique,                     -- 手机号（验证码登录用）
+  email         text unique,                     -- 邮箱（验证码登录用）
   avatar_url    text,
   created_at    timestamptz not null default now()
 );
@@ -64,6 +65,19 @@ create table if not exists public.phone_codes (
 
 create index if not exists phone_codes_phone_idx
   on public.phone_codes (phone, created_at desc);
+
+-- 邮箱验证码表
+create table if not exists public.email_codes (
+  id         uuid primary key default gen_random_uuid(),
+  email      text not null,
+  code_hash  text not null,
+  expires_at timestamptz not null,
+  attempts   integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists email_codes_email_idx
+  on public.email_codes (email, created_at desc);
 
 -- ------------------------------------------------------------
 -- 触发器：自动维护点赞数 / 评论数

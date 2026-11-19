@@ -3,31 +3,34 @@ import bcrypt from 'bcryptjs';
 import { getSupabase } from '@/lib/supabase';
 import { signSession, setSessionCookie } from '@/lib/auth';
 
+const PHONE_RE = /^1[3-9]\d{9}$/;
+
 export async function POST(request) {
   try {
     const body = await request.json();
-    const username = String(body.username || '').trim();
+    const account = String(body.identifier ?? body.username ?? '').trim();
     const password = String(body.password || '');
 
-    if (!username || !password) {
-      return NextResponse.json({ error: '请输入用户名和密码' }, { status: 400 });
+    if (!account || !password) {
+      return NextResponse.json({ error: '请输入账号和密码' }, { status: 400 });
     }
 
     const supabase = getSupabase();
+    const isPhone = PHONE_RE.test(account);
 
     const { data: user } = await supabase
       .from('users')
       .select('id, username, password_hash, role, is_muted')
-      .eq('username', username)
+      .eq(isPhone ? 'phone' : 'username', account)
       .maybeSingle();
 
-    if (!user) {
-      return NextResponse.json({ error: '用户名或密码不正确' }, { status: 401 });
+    if (!user || !user.password_hash) {
+      return NextResponse.json({ error: isPhone ? '手机号或密码不正确' : '用户名或密码不正确' }, { status: 401 });
     }
 
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) {
-      return NextResponse.json({ error: '用户名或密码不正确' }, { status: 401 });
+      return NextResponse.json({ error: isPhone ? '手机号或密码不正确' : '用户名或密码不正确' }, { status: 401 });
     }
 
     const token = await signSession({ sub: user.id, username: user.username, role: user.role });
