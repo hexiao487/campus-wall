@@ -1,0 +1,105 @@
+import { NextResponse } from 'next/server';
+import { getSupabase } from '@/lib/supabase';
+import { getSessionUser } from '@/lib/auth';
+
+const PAGE_SIZE = 20;
+const MAX_LEN = 1000;
+
+/** 帖子列表（按时间倒序，支持 cursor 翻页） */
+export async function GET(request) {
+  try {
+    const supabase = getSupabase();
+    const user = await getSessionUser(request);
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get('cursor');
+
+    let query = supabase
+      .from('posts')
+      .select('id, author_name, content, image_url, like_count, comment_count, created_at')
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE);
+
+    if (cursor) query = query.lt('created_at', cursor);
+
+    const { data: posts, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const rows = posts || [];
+
+    // 当前用户点赞过哪些帖子
+    let likedIds = [];
+    if (user?.id && rows.length) {
+      const { data: likes } = await supabase
+        .from('likes')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .in('post_id', rows.map((p) => p.id));
+      likedIds = (likes || []).map((l) => l.post_id);
+    }
+
+    return NextResponse.json({
+      posts: rows,
+      likedIds,
+      nextCursor: rows.length === PAGE_SIZE ? rows[rows.length - 1].created_at : null
+    });
+  } catch (e) {
+    return NextResponse.json({ error: '加载帖子失败：' + e.message }, { status: 500 });
+  }
+}
+
+/** 发帖 */
+export async function POST(request) {
+  try {
+    const supabase = getSupabase();
+    const user = await getSessionUser(request);
+    if (!user) {
+      return NextResponse.json({ error: '请先登录再发帖' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const content = String(body.content || '').trim();
+    const imageUrl = body.imageUrl ? String(body.imageUrl).trim() : null;
+
+    if (!content && !imageUrl) {
+      return NextResponse.json({ error: '说点什么再发吧' }, { status: 400 });
+    }
+    if (content.length > MAX_LEN) {
+      return NextResponse.json({ error: `内容最多 ${MAX_LEN} 字` }, { status: 400 });
+    }
+
+    let authorName = user.username;
+    if (user.role === 'user') {
+      const { data: me } = await supabase
+        .from('users')
+        .select('is_muted, username')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!me) {
+        return NextResponse.json({ error: '账号不存在，请重新登录' }, { status: 401 });
+      }
+      if (me.is_muted) {
+        return NextResponse.json({ error: '你已被管理员禁言，暂时不能发帖' }, { status: 403 });
+      }
+      authorName = me.username;
+    } else {
+      authorName = '管理员';
+    }
+
+    const { data: created, error } = await supabase
+      .from('posts')
+      .insert({
+        author_id: user.role === 'admin' ? null : user.id,
+        author_name: authorName,
+        content: content || '',
+        image_url: imageUrl
+      })
+      .select('id, author_name, content, image_url, like_count, comment_count, created_at')
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    return NextResponse.json({ post: { ...created, liked: false } });
+  } catch (e) {
+    return NextResponse.json({ error: '发布失败：' + e.message }, { status: 500 });
+  }
+}
