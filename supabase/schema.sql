@@ -13,6 +13,7 @@ create table if not exists public.users (
   role          text not null default 'user',    -- user / admin
   is_muted      boolean not null default false,  -- 是否被禁言
   wechat_openid text unique,                     -- 微信开放平台 openid（扫码登录用）
+  phone         text unique,                     -- 手机号（验证码登录用）
   avatar_url    text,
   created_at    timestamptz not null default now()
 );
@@ -50,6 +51,19 @@ create table if not exists public.comments (
 );
 
 create index if not exists comments_post_idx on public.comments (post_id, created_at);
+
+-- 手机验证码表（只存哈希，5 分钟有效，最多试 5 次）
+create table if not exists public.phone_codes (
+  id         uuid primary key default gen_random_uuid(),
+  phone      text not null,
+  code_hash  text not null,
+  expires_at timestamptz not null,
+  attempts   integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists phone_codes_phone_idx
+  on public.phone_codes (phone, created_at desc);
 
 -- ------------------------------------------------------------
 -- 触发器：自动维护点赞数 / 评论数
