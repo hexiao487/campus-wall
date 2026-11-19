@@ -133,9 +133,13 @@ export async function POST(request) {
       .single();
     if (error) throw new Error(error.message);
 
-    // 收到给「豆沙包」的私信时，让机器人自动回一条（不阻塞发送结果）
+    // 收到给「豆沙包」的私信时，让机器人自动回一条（同步等待，保证 serverless 不会被提前冻结）
     if (to === BOT_ID) {
-      replyAsBot(supabase, me, kind, content).catch(() => {});
+      try {
+        await replyAsBot(supabase, me, kind, content);
+      } catch {
+        // 机器人出错不影响消息本身发送
+      }
     }
 
     return NextResponse.json({ message: created });
@@ -172,7 +176,7 @@ async function replyAsBot(supabase, me, kind, content) {
     .eq('kind', 'text')
     .or(`and(sender_id.eq.${me.id},receiver_id.eq.${BOT_ID}),and(sender_id.eq.${BOT_ID},receiver_id.eq.${me.id})`)
     .order('created_at', { ascending: false })
-    .limit(6);
+    .limit(4);
 
   const history = (recent || [])
     .slice(1)
