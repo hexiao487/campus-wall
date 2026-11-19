@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import { BOT_ID, generateBotReply } from '@/lib/bot';
 import { getSessionUser } from '@/lib/auth';
 import { areFriends, usersByIds } from '@/lib/social';
 
@@ -132,8 +133,69 @@ export async function POST(request) {
       .single();
     if (error) throw new Error(error.message);
 
+    // 收到给「豆沙包」的私信时，让机器人自动回一条（不阻塞发送结果）
+    if (to === BOT_ID) {
+      replyAsBot(supabase, me, kind, content).catch(() => {});
+    }
+
     return NextResponse.json({ message: created });
   } catch (e) {
     return NextResponse.json({ error: '发送失败：' + e.message }, { status: 500 });
   }
+}
+
+
+/** 以机器人身份回复一条私信 */
+async function replyAsBot(supabase, me, kind, content) {
+  // 每小时每人最多 30 条自动回复，防止刷
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count } = await supabase
+    .from('dm_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('sender_id', BOT_ID)
+    .eq('receiver_id', me.id)
+    .gte('created_at', hourAgo);
+  if ((count || 0) >= 30) return;
+
+  const text =
+    kind === 'text'
+      ? content
+      : kind === 'image'
+      ? '（发来一张图片）'
+      : kind === 'audio'
+      ? '（发来一条语音）'
+      : '（发来一个对讲机邀请）';
+
+  const { data: recent } = await supabase
+    .from('dm_messages')
+    .select('sender_id, content, kind')
+    .eq('kind', 'text')
+    .or(`and(sender_id.eq.${me.id},receiver_id.eq.${BOT_ID}),and(sender_id.eq.${BOT_ID},receiver_id.eq.${me.id})`)
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  const history = (recent || [])
+    .slice(1)
+    .reverse()
+    .filter((m) => m.content)
+    .map((m) => ({
+      role: m.sender_id === me.id ? 'user' : 'assistant',
+      content: String(m.content).slice(0, 400)
+    }));
+
+  const reply = await generateBotReply({ username: me.username || '同学', text, history });
+
+  await supabase.from('dm_messages').insert({
+    sender_id: BOT_ID,
+    receiver_id: me.id,
+    kind: 'text',
+    content: reply
+  });
+
+  await supabase
+    .from('dm_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('sender_id', me.id)
+    .eq('receiver_id', BOT_ID)
+    .is('read_at', null);
 }
