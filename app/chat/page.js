@@ -1,21 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import SiteHeader from '@/components/SiteHeader';
-import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
-const POLL_MS = 5000;
-
-export default function ChatPage() {
+export default function ChatHubPage() {
   const [me, setMe] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
+  const [mine, setMine] = useState([]);
+  const [others, setOthers] = useState([]);
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [busyId, setBusyId] = useState('');
   const [err, setErr] = useState('');
-  const listRef = useRef(null);
-  const atBottomRef = useRef(true);
 
   const loadMe = useCallback(async () => {
     try {
@@ -27,12 +24,13 @@ export default function ChatPage() {
     }
   }, []);
 
-  const loadMessages = useCallback(async () => {
+  const loadGroups = useCallback(async () => {
     try {
-      const res = await fetch('/api/chat', { cache: 'no-store' });
+      const res = await fetch('/api/groups', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '加载失败');
-      setMessages(data.messages || []);
+      setMine(data.mine || []);
+      setOthers(data.others || []);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -41,72 +39,59 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    loadMe();
-    loadMessages();
-  }, [loadMe, loadMessages]);
-
-  useEffect(() => {
-    const timer = setInterval(loadMessages, POLL_MS);
-    return () => clearInterval(timer);
-  }, [loadMessages]);
-
-  useEffect(() => {
-    const el = listRef.current;
-    if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
-  }, [messages]);
-
-  function handleScroll() {
-    const el = listRef.current;
-    if (!el) return;
-    atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-  }
-
-  async function send(e) {
-    e.preventDefault();
-    const content = text.trim();
-    if (!content || sending) return;
-    setSending(true);
-    setErr('');
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '发送失败');
-      atBottomRef.current = true;
-      setMessages((prev) => [...prev, data.message]);
-      setText('');
-    } catch (e2) {
-      setErr(e2.message);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function remove(msg) {
-    if (!window.confirm('撤回这条消息吗？')) return;
-    setErr('');
-    const backup = messages;
-    setMessages((prev) => prev.filter((m) => m.id !== msg.id));
-    try {
-      const res = await fetch(`/api/chat/${msg.id}`, { method: 'DELETE' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || '撤回失败');
-    } catch (e) {
-      setMessages(backup);
-      setErr(e.message);
-    }
-  }
+    (async () => {
+      await loadMe();
+      await loadGroups();
+    })();
+  }, [loadMe, loadGroups]);
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     setMe(null);
+    setMine([]);
+    setOthers([]);
   }
 
-  const isAdmin = me?.role === 'admin';
-  const muted = me?.role === 'user' && me?.isMuted;
+  async function createGroup(e) {
+    e.preventDefault();
+    if (creating) return;
+    setErr('');
+    setCreating(true);
+    try {
+      const res = await fetch('/api/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '创建失败');
+      setName('');
+      await loadGroups();
+      window.location.href = `/chat/${data.group.id}`;
+    } catch (e2) {
+      setErr(e2.message);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function join(group) {
+    if (busyId) return;
+    setErr('');
+    setBusyId(group.id);
+    try {
+      const res = await fetch(`/api/groups/${group.id}/join`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '申请失败');
+      setOthers((prev) =>
+        prev.map((g) => (g.id === group.id ? { ...g, request_status: 'pending' } : g))
+      );
+    } catch (e2) {
+      setErr(e2.message);
+    } finally {
+      setBusyId('');
+    }
+  }
 
   return (
     <>
@@ -117,7 +102,7 @@ export default function ChatPage() {
           <h1>
             群<span>聊</span>
           </h1>
-          <p>墙上的实时聊天室，所有登录的同学都在这里。</p>
+          <p>自己开群、申请进群，群主同意后才能一起聊。</p>
         </div>
 
         {err && (
@@ -126,84 +111,90 @@ export default function ChatPage() {
           </div>
         )}
 
-        {isAdmin && (
-          <div className="notice">
-            你正以管理员身份浏览，可以发言、撤回任意消息；禁言请前往{' '}
-            <Link href="/admin" style={{ color: 'var(--blue)', fontWeight: 600 }}>
-              管理后台
-            </Link>
-            。
-          </div>
-        )}
-
-        <div className="card chat-card">
-          <div className="chat-list" ref={listRef} onScroll={handleScroll}>
-            {loading ? (
-              <div className="empty">正在加载群聊…</div>
-            ) : messages.length === 0 ? (
-              <div className="empty">还没有人说话，来开个场吧 ✨</div>
-            ) : (
-              messages.map((m) => {
-                const mine = Boolean(me?.id) && m.author_id === me.id;
-                const canDelete = isAdmin || mine;
-                const isAdminMsg = m.author_name === '管理员';
-                return (
-                  <div className={`chat-row ${mine ? 'mine' : ''}`} key={m.id}>
-                    {!mine && (
-                      <span className="avatar chat-avatar" style={avatarStyle(m.author_name)}>
-                        {initial(m.author_name)}
-                      </span>
-                    )}
-                    <div className="chat-main">
-                      <div className="chat-meta">
-                        {!mine && (
-                          <span className="chat-author">
-                            {m.author_name}
-                            {isAdminMsg && <span className="badge-admin">官方</span>}
-                          </span>
-                        )}
-                        {mine && (
-                          <span className="chat-author">
-                            我{isAdminMsg && <span className="badge-admin">官方</span>}
-                          </span>
-                        )}
-                        <span className="chat-time">{timeAgo(m.created_at)}</span>
-                        {canDelete && (
-                          <button className="chat-del" onClick={() => remove(m)}>
-                            撤回
-                          </button>
-                        )}
-                      </div>
-                      <div className="chat-bubble">{m.content}</div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {me ? (
-            <form className="chat-form" onSubmit={send}>
-              <input
-                value={text}
-                maxLength={500}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={muted ? '你已被禁言，暂时不能发言' : '说点什么…'}
-                disabled={muted || sending}
-              />
-              <button className="btn btn-primary btn-mini" disabled={muted || sending || !text.trim()}>
-                {sending ? '发送中' : '发送'}
-              </button>
-            </form>
-          ) : (
-            <div className="chat-guest">
-              <Link className="btn btn-primary btn-mini" href="/login">
+        {!me ? (
+          <div className="card composer">
+            <div className="notice" style={{ marginBottom: 0 }}>
+              登录后才能创建群聊、申请加入和发言。
+            </div>
+            <div className="composer-bar">
+              <Link className="btn btn-primary" href="/login">
                 登录 / 注册
               </Link>
-              <span>登录后才能参与群聊</span>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            <div className="card group-create">
+              <div className="group-section-title">创建群聊</div>
+              <form className="group-create-form" onSubmit={createGroup}>
+                <input
+                  value={name}
+                  maxLength={24}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="给群起个名字，比如「高二（3）班」"
+                />
+                <button className="btn btn-primary btn-mini" disabled={creating || !name.trim()}>
+                  {creating ? '创建中…' : '创建'}
+                </button>
+              </form>
+            </div>
+
+            <div className="group-section-title" style={{ margin: '22px 0 10px' }}>
+              我的群聊
+            </div>
+            {loading ? (
+              <div className="empty">正在加载…</div>
+            ) : mine.length === 0 ? (
+              <div className="empty">还没加入任何群，先创建一个或者申请一个吧 ✨</div>
+            ) : (
+              mine.map((g) => (
+                <Link className="card group-row" href={`/chat/${g.id}`} key={g.id}>
+                  <div className="group-avatar">{g.name.slice(0, 1)}</div>
+                  <div className="group-info">
+                    <div className="group-name">
+                      {g.name}
+                      {g.is_owner && <span className="badge-admin">群主</span>}
+                    </div>
+                    <div className="group-sub">
+                      群主 {g.owner_name} · {g.member_count} 人
+                    </div>
+                  </div>
+                  <span className="group-enter">进入</span>
+                </Link>
+              ))
+            )}
+
+            <div className="group-section-title" style={{ margin: '22px 0 10px' }}>
+              发现群聊
+            </div>
+            {loading ? null : others.length === 0 ? (
+              <div className="empty">暂时没有别的群，你可以自己开一个。</div>
+            ) : (
+              others.map((g) => (
+                <div className="card group-row" key={g.id}>
+                  <div className="group-avatar">{g.name.slice(0, 1)}</div>
+                  <div className="group-info">
+                    <div className="group-name">{g.name}</div>
+                    <div className="group-sub">
+                      群主 {g.owner_name} · {g.member_count} 人
+                    </div>
+                  </div>
+                  {g.request_status === 'pending' ? (
+                    <span className="group-pending">等待群主同意</span>
+                  ) : (
+                    <button
+                      className="btn btn-ghost btn-mini"
+                      disabled={busyId === g.id}
+                      onClick={() => join(g)}
+                    >
+                      {g.request_status === 'rejected' ? '重新申请' : '申请加入'}
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </>
+        )}
       </main>
     </>
   );
