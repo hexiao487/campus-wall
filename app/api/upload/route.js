@@ -5,7 +5,18 @@ import { getSessionUser } from '@/lib/auth';
 export const runtime = 'nodejs';
 
 const MAX_SIZE = 4 * 1024 * 1024; // 4MB，Vercel 单次请求上限 4.5MB
-const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'audio/webm',
+  'audio/ogg',
+  'audio/mp4',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/aac'
+];
 
 /** 上传配图到 Supabase Storage */
 export async function POST(request) {

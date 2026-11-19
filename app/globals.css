@@ -1333,3 +1333,170 @@ textarea {
     padding: 36px 16px 40px;
   }
 }
+
+/* ============================================================
+   私信 / 对讲机 / 好友（V1.6）
+   ============================================================ */
+
+.dm-list {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--inner-hi);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  padding: 18px;
+  max-height: 62vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dm-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.dm-line.mine {
+  justify-content: flex-end;
+}
+
+.dm-bubble {
+  max-width: 74%;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.dm-bubble.mine {
+  background: var(--ink);
+  color: #fff;
+  border-color: transparent;
+  border-radius: 18px 18px 6px 18px;
+}
+
+.dm-image {
+  display: block;
+  max-width: 220px;
+  max-height: 260px;
+  border-radius: 12px;
+}
+
+.dm-audio {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dm-audio audio {
+  width: 210px;
+  height: 34px;
+}
+
+.dm-ptt-invite {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.dm-ptt-invite span {
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.dm-time {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.55;
+  text-align: right;
+}
+
+.dm-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px;
+  background: var(--glass-hi);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dm-input {
+  flex: 1;
+  height: 38px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.ptt-card {
+  padding: 26px;
+  text-align: center;
+}
+
+.ptt-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 26px;
+}
+
+.ptt-live {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.ptt-button {
+  width: 100%;
+  max-width: 340px;
+  height: 150px;
+  border-radius: 32px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  transition: transform 0.12s, background 0.2s, color 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.ptt-button:active,
+.ptt-button.talking {
+  background: var(--ink);
+  color: #fff;
+  transform: scale(0.98);
+}
+
+.ptt-icon {
+  font-size: 40px;
+}
+
+.ptt-card .hint-line {
+  margin-top: 18px;
+}
