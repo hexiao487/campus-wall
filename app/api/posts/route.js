@@ -15,7 +15,7 @@ export async function GET(request) {
 
     let query = supabase
       .from('posts')
-      .select('id, author_name, content, image_url, like_count, comment_count, created_at')
+      .select('id, author_id, author_name, content, image_url, like_count, comment_count, created_at')
       .order('created_at', { ascending: false })
       .limit(PAGE_SIZE);
 
@@ -93,7 +93,7 @@ export async function POST(request) {
         content: content || '',
         image_url: imageUrl
       })
-      .select('id, author_name, content, image_url, like_count, comment_count, created_at')
+      .select('id, author_id, author_name, content, image_url, like_count, comment_count, created_at')
       .single();
 
     if (error) throw new Error(error.message);

@@ -7,10 +7,16 @@ import Link from 'next/link';
 const PHONE_RE = /^1[3-9]\d{9}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+const TABS = [
+  { key: 'email', label: '邮箱验证码' },
+  { key: 'phone', label: '手机号 / 密码' },
+  { key: 'account', label: '账号密码' }
+];
+
 export default function LoginPage() {
   const router = useRouter();
 
-  const [tab, setTab] = useState('email'); // email | password
+  const [tab, setTab] = useState('email');
   const [mailReady, setMailReady] = useState(false);
 
   // 邮箱验证码
@@ -19,9 +25,10 @@ export default function LoginPage() {
   const [countdown, setCountdown] = useState(0);
   const [sending, setSending] = useState(false);
 
-  // 手机号 / 用户名 + 密码
+  // 手机号 / 账号 + 密码
   const [mode, setMode] = useState('login'); // login | register
-  const [account, setAccount] = useState('');
+  const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const [err, setErr] = useState('');
@@ -87,11 +94,12 @@ export default function LoginPage() {
     setErr('');
     setBusy(true);
     try {
+      const identifier = (tab === 'phone' ? phone : username).trim();
       const url = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: account.trim(), password })
+        body: JSON.stringify({ identifier, password })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '操作失败');
@@ -103,38 +111,39 @@ export default function LoginPage() {
     }
   }
 
+  const isPhoneTab = tab === 'phone';
+  const identifierValue = isPhoneTab ? phone : username;
+  const canPasswordSubmit = isPhoneTab
+    ? PHONE_RE.test(phone) && password.length >= 6
+    : username.trim().length >= 2 && password.length >= 6;
+
   return (
     <div className="auth-wrap">
       <div style={{ marginBottom: 22 }}>
         <Link className="brand" href="/">
           <span className="brand-logo">墙</span>
           校园墙
+          <span className="ver-badge">V1.3</span>
         </Link>
       </div>
 
       <div className="card auth-card">
-        <h1 className="auth-title">登录</h1>
-        <p className="auth-sub">邮箱验证码，或手机号加密码</p>
+        <h1 className="auth-title">{mode === 'login' ? '登录' : '注册'}</h1>
+        <p className="auth-sub">邮箱验证码、手机号密码、账号密码，任选一种</p>
 
-        <div className="tabs">
-          <button
-            className={tab === 'email' ? 'active' : ''}
-            onClick={() => {
-              setTab('email');
-              setErr('');
-            }}
-          >
-            邮箱验证码
-          </button>
-          <button
-            className={tab === 'password' ? 'active' : ''}
-            onClick={() => {
-              setTab('password');
-              setErr('');
-            }}
-          >
-            手机号 / 密码
-          </button>
+        <div className="tabs tabs-3">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              className={tab === t.key ? 'active' : ''}
+              onClick={() => {
+                setTab(t.key);
+                setErr('');
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {err && <div className="alert">{err}</div>}
@@ -190,12 +199,12 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={passwordSubmit}>
             <div className="field">
-              <label>{mode === 'register' ? '手机号 / 用户名' : '手机号 / 用户名'}</label>
+              <label>{isPhoneTab ? '手机号' : '账号（用户名）'}</label>
               <input
-                value={account}
-                onChange={(e) => setAccount(e.target.value)}
-                placeholder="11 位手机号，或已注册的用户名"
-                autoComplete="username"
+                value={identifierValue}
+                onChange={(e) => (isPhoneTab ? setPhone(e.target.value) : setUsername(e.target.value))}
+                placeholder={isPhoneTab ? '11 位手机号' : '2-16 位中文、字母、数字'}
+                autoComplete={isPhoneTab ? 'tel' : 'username'}
               />
             </div>
             <div className="field">
@@ -208,7 +217,11 @@ export default function LoginPage() {
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               />
             </div>
-            <button className="btn btn-primary" style={{ width: '100%', height: 46 }} disabled={busy}>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', height: 46 }}
+              disabled={busy || !canPasswordSubmit}
+            >
               {busy ? '请稍候…' : mode === 'login' ? '登录' : '注册并登录'}
             </button>
 
@@ -221,9 +234,21 @@ export default function LoginPage() {
                 }}
                 style={{ fontSize: 13, color: 'var(--ink-soft)' }}
               >
-                {mode === 'login' ? '没有账号？用手机号注册' : '已有账号？去登录'}
+                {mode === 'login'
+                  ? isPhoneTab
+                    ? '没有账号？用手机号注册'
+                    : '没有账号？注册一个账号'
+                  : '已有账号？去登录'}
               </button>
             </div>
+
+            {mode === 'register' && (
+              <div className="hint-line">
+                {isPhoneTab
+                  ? '用手机号注册会自动生成昵称（同学 + 手机尾号）。'
+                  : '账号注册只认用户名和密码，建议顺手记牢。'}
+              </div>
+            )}
           </form>
         )}
 

@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
         author_name: authorName,
         content
       })
-      .select('id, author_name, content, created_at')
+      .select('id, post_id, author_id, author_name, content, created_at')
       .single();
 
     if (error) throw new Error(error.message);

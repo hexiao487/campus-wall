@@ -118,6 +118,14 @@ export default function HomePage() {
     );
   }
 
+  function handleCommentDeleted(postId) {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, comment_count: Math.max(0, (p.comment_count || 0) - 1) } : p
+      )
+    );
+  }
+
   async function loadMore() {
     if (!cursor || loadingMore) return;
     setLoadingMore(true);
@@ -147,7 +155,7 @@ export default function HomePage() {
 
         {me?.role === 'admin' && (
           <div className="notice">
-            你正以管理员身份浏览，可以直接删帖；用户禁言请前往{' '}
+            你正以管理员身份浏览，可以发帖、评论，也可以删除任意帖子和评论；用户禁言请前往{' '}
             <Link href="/admin" style={{ color: 'var(--blue)', fontWeight: 600 }}>
               管理后台
             </Link>
@@ -168,6 +176,7 @@ export default function HomePage() {
               me={me}
               onLike={handleLike}
               onDelete={handleDelete}
+              onDeleteComment={handleCommentDeleted}
               onCommentAdded={handleCommentAdded}
             />
           ))

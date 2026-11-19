@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
-export default function PostCard({ post, liked, me, onLike, onDelete, onCommentAdded }) {
+export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteComment, onCommentAdded }) {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -12,6 +12,28 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onCommentA
   const [err, setErr] = useState('');
 
   const isAdminAuthor = post.author_name === '管理员';
+  const isAdmin = me?.role === 'admin';
+  const canDeletePost = isAdmin || (Boolean(me?.id) && post.author_id === me.id);
+
+  function canDeleteComment(c) {
+    return isAdmin || (Boolean(me?.id) && c.author_id === me.id);
+  }
+
+  async function removeComment(c) {
+    if (!window.confirm('确定删除这条评论吗？')) return;
+    setErr('');
+    const backup = comments || [];
+    setComments((prev) => (prev || []).filter((x) => x.id !== c.id));
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments/${c.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '删除评论失败');
+      onDeleteComment?.(post.id);
+    } catch (e) {
+      setComments(backup);
+      setErr(e.message);
+    }
+  }
 
   async function toggleComments() {
     if (open) {
@@ -94,9 +116,9 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onCommentA
           <span>{post.comment_count || 0}</span>
         </button>
 
-        {me?.role === 'admin' && (
+        {canDeletePost && (
           <button className="act act-danger" onClick={() => onDelete(post)}>
-            删帖
+            {isAdmin ? '删帖' : '删除'}
           </button>
         )}
       </div>
@@ -112,6 +134,11 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onCommentA
             <div className="comment" key={c.id}>
               <span className="comment-author">{c.author_name}：</span>
               <span className="comment-text">{c.content}</span>
+              {canDeleteComment(c) && (
+                <button className="comment-del" onClick={() => removeComment(c)} title="删除这条评论">
+                  删除
+                </button>
+              )}
             </div>
           ))}
 
