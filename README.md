@@ -165,15 +165,43 @@ git push -u origin main
 
 ---
 
-## 八、常见坑
+## 八、微信扫码登录怎么开
+
+登录页已经内置微信扫码入口，默认是禁用状态（按钮显示「未配置」）。启用只差两个环境变量：
+
+| 变量名 | 值 |
+| --- | --- |
+| `WECHAT_APP_ID` | 微信开放平台「网站应用」的 AppID |
+| `WECHAT_APP_SECRET` | 对应的 AppSecret |
+
+加完 Redeploy 即可，代码会自动：
+
+1. `/api/auth/wechat/start` 跳转微信扫码页（`scope=snsapi_login`）；
+2. 扫码后微信回调 `/api/auth/wechat/callback`，用 code 换 openid；
+3. 首次登录自动建账号（拿微信昵称作用户名，重名自动加后缀），写 `users.wechat_openid`；
+4. 下发和账号密码登录同一套 JWT cookie，之后发帖点赞评论完全一致。
+
+**开通门槛（这段是重点）**
+
+- 必须是**微信开放平台**的「网站应用」，个人主体不能申请，需要企业 / 个体工商户营业执照 + 300 元/年认证费；
+- 开放平台审核时要求**授权回调域名已完成 ICP 备案**。本站跑在 Vercel（境外），域名没有备案，很可能卡在这一步；
+- 另一种路径是认证服务号 + 网页授权（`snsapi_userinfo`），同样需要认证与备案。
+
+所以在没有 AppID/AppSecret 之前，微信按钮会一直是禁用状态——这不是 bug，是缺资质。拿到资质后把两个变量填进 Vercel，功能立刻生效，不用改代码。
+
+---
+
+## 九、常见坑
 
 | 现象 | 原因 / 解决 |
 | --- | --- |
 | 发帖报「加载帖子失败」 | 环境变量没配好，或 Supabase 项目被暂停（免费版长期无访问会休眠，登录控制台点一下恢复） |
+| 发帖报「permission denied for table posts」 | 建表后没给 `service_role` 授权，跑一遍 `supabase/schema.sql` 里的 `grant ...` 那几行 |
 | 图片上传 413 | Vercel 单次请求上限 4.5MB，前端已限制 4MB；更大的图请先压缩，或改走 COS 直传 |
 | 图片显示不出来 | `schema.sql` 里的 `campus-wall` 桶没建成功，或桶不是 public |
 | 管理员密码一直报错 | Vercel 改了环境变量没 Redeploy |
-| 想让页面更「校园」一点 | 改 `app/globals.css` 里的 `--brand` / `--brand-2` 两个色值即可换主题色 |
+| 微信按钮是灰的 | 提示「未配置」= 缺 `WECHAT_APP_ID` / `WECHAT_APP_SECRET`，见第八节 |
+| 想让页面更「校园」一点 | 改 `app/globals.css` 里的 `--brand` / `--brand-2` 两个色值即可换主题色；已是暗色主题，改 `--bg` / `--card` 可调明暗 |
 
 ---
 
