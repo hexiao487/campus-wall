@@ -10,11 +10,14 @@ export default function SiteHeader({ me, onLogout }) {
         <Link className="brand" href="/">
           <span className="brand-logo">墙</span>
           校园墙
-          <span className="ver-badge">V1.4</span>
+          <span className="ver-badge">V1.5</span>
           <span className="brand-sub">说出你的想法</span>
         </Link>
 
         <div className="header-right">
+          <a className="header-link" href="/downloads/campus-wall-v1.5.apk" download>
+            下载 App
+          </a>
           <Link className="header-link" href="/chat">
             群聊
           </Link>
