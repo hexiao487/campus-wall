@@ -25,6 +25,19 @@ export async function GET(request) {
 
     const cfg = await loadBotConfig(supabase);
     steps.push({ step: 'config', hasKey: Boolean(cfg.key), model: cfg.model || null, url: cfg.url || null });
+    // 直接打一次模型接口，把真实状态码和报错暴露出来
+    try {
+      const res = await fetch(`${String(cfg.url || '').replace(/\/$/, '')}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: cfg.model, messages: [{ role: 'user', content: '回一个字：好' }], max_tokens: 30 })
+      });
+      const txt = await res.text();
+      steps.push({ step: 'raw', status: res.status, body: txt.slice(0, 300) });
+    } catch (e) {
+      steps.push({ step: 'raw', error: e.message });
+    }
+
     const reply = await generateBotReply({ username: me.username || '同学', text: '你好在吗', history: [], cfg });
     steps.push({ step: 'reply', ok: Boolean(reply), preview: reply?.slice(0, 80) });
 
