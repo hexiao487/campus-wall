@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/lib/imageCompress';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -115,8 +117,9 @@ export default function DmRoomPage() {
   }
 
   async function uploadFile(file) {
+    const prepared = file.type?.startsWith('image/') ? await compressImage(file) : file;
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', prepared);
     const res = await fetch('/api/upload', { method: 'POST', body: form });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '上传失败');

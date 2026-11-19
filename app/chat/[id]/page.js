@@ -1,5 +1,7 @@
 'use client';
 
+import { compressImage } from '@/lib/imageCompress';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -115,15 +117,16 @@ export default function GroupRoomPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setErr('');
-    if (file.size > MAX_IMAGE) {
-      setErr('图片不能超过 4MB，先压缩一下吧');
+    if (file.size > 24 * 1024 * 1024) {
+      setErr('图片太大了（超过 24MB），换一张吧');
       e.target.value = '';
       return;
     }
     setUploading(true);
     try {
+      const prepared = await compressImage(file);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', prepared);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '上传失败');
