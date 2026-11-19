@@ -96,6 +96,18 @@ alter table public.likes    enable row level security;
 alter table public.comments enable row level security;
 
 -- ------------------------------------------------------------
+-- 授权：用 SQL 建表时 Supabase 不会自动给 service_role 授予表权限，
+-- 缺这一段线上会报 "permission denied for table xxx"。
+-- RLS 已开启且无策略，anon/authenticated 即使有 grant 也读不到数据。
+-- ------------------------------------------------------------
+grant usage on schema public to anon, authenticated, service_role;
+grant all privileges on all tables    in schema public to anon, authenticated, service_role;
+grant all privileges on all sequences in schema public to anon, authenticated, service_role;
+grant all privileges on all functions in schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+
+-- ------------------------------------------------------------
 -- 图片存储桶（公开可读，只有服务端能上传）
 -- ------------------------------------------------------------
 insert into storage.buckets (id, name, public)
