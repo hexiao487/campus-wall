@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
-import { BOT_ID, generateBotReply } from '@/lib/bot';
+import { BOT_ID, generateBotReply, loadBotConfig } from '@/lib/bot';
 import { getSessionUser } from '@/lib/auth';
 import { areFriends, usersByIds } from '@/lib/social';
 
@@ -183,7 +183,8 @@ async function replyAsBot(supabase, me, kind, content) {
       content: String(m.content).slice(0, 400)
     }));
 
-  const reply = await generateBotReply({ username: me.username || '同学', text, history });
+  const cfg = await loadBotConfig(supabase);
+  const reply = await generateBotReply({ username: me.username || '同学', text, history, cfg });
 
   await supabase.from('dm_messages').insert({
     sender_id: BOT_ID,

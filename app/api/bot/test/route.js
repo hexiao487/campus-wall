@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
-import { BOT_ID, generateBotReply } from '@/lib/bot';
+import { BOT_ID, generateBotReply, loadBotConfig } from '@/lib/bot';
 
 /** 诊断用：直接跑一遍机器人回复逻辑，把错误暴露出来 */
 export async function GET(request) {
@@ -23,7 +23,9 @@ export async function GET(request) {
       .limit(6);
     steps.push({ step: 'history', ok: !qErr, error: qErr?.message || null, count: (recent || []).length });
 
-    const reply = await generateBotReply({ username: me.username || '同学', text: '你好在吗', history: [] });
+    const cfg = await loadBotConfig(supabase);
+    steps.push({ step: 'config', hasKey: Boolean(cfg.key), model: cfg.model || null, url: cfg.url || null });
+    const reply = await generateBotReply({ username: me.username || '同学', text: '你好在吗', history: [], cfg });
     steps.push({ step: 'reply', ok: Boolean(reply), preview: reply?.slice(0, 80) });
 
     return NextResponse.json({ ok: true, steps });
