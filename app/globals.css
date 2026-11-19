@@ -1500,3 +1500,26 @@ textarea {
 .ptt-card .hint-line {
   margin-top: 18px;
 }
+
+/* 顶部导航：新增入口后收紧排版，避免挤成两行 */
+.header-inner {
+  max-width: 780px;
+}
+
+.header-right {
+  gap: 2px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.header-link {
+  font-size: 12px;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .brand-sub {
+    display: none;
+  }
+}
