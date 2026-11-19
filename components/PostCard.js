@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
 export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteComment, onCommentAdded }) {
@@ -83,12 +84,22 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteCo
   return (
     <article className="card post">
       <div className="post-head">
-        <div className="avatar" style={avatarStyle(post.author_name)}>
-          {initial(post.author_name)}
-        </div>
+        {post.author_id ? (
+          <Link className="avatar avatar-link" href={`/u/${post.author_id}`} style={avatarStyle(post.author_name)} title="看主页">
+            {initial(post.author_name)}
+          </Link>
+        ) : (
+          <div className="avatar" style={avatarStyle(post.author_name)}>
+            {initial(post.author_name)}
+          </div>
+        )}
         <div className="post-meta">
           <div className="post-author">
-            {post.author_name}{' '}
+            {post.author_id ? (
+              <Link className="author-link" href={`/u/${post.author_id}`}>{post.author_name}</Link>
+            ) : (
+              post.author_name
+            )}{' '}
             {isAdminAuthor && <span className="badge-admin">官方</span>}
           </div>
           <div className="post-time">{timeAgo(post.created_at)}</div>

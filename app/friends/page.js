@@ -121,12 +121,12 @@ export default function FriendsPage() {
 
   const personRow = (u, right) => (
     <div className="row" key={u.id}>
-      <span className="avatar" style={{ ...avatarStyle(u.username), width: 38, height: 38, borderRadius: 12 }}>
+      <Link className="avatar avatar-link" href={`/u/${u.id}`} style={{ ...avatarStyle(u.username), width: 38, height: 38, borderRadius: 12 }}>
         {initial(u.username)}
-      </span>
+      </Link>
       <div className="row-main">
         <div className="row-title">
-          {u.username}
+          <Link className="author-link" href={`/u/${u.id}`}>{u.username}</Link>
           {u.role === 'admin' && <span className="badge-admin">管理员</span>}
         </div>
         <div className="row-sub">{u.followedBy ? '关注了你' : ''}</div>

@@ -12,6 +12,7 @@ export async function GET(request) {
     const user = await getSessionUser(request);
     const { searchParams } = new URL(request.url);
     const cursor = searchParams.get('cursor');
+    const author = searchParams.get('author');
 
     let query = supabase
       .from('posts')
@@ -19,6 +20,7 @@ export async function GET(request) {
       .order('created_at', { ascending: false })
       .limit(PAGE_SIZE);
 
+    if (author) query = query.eq('author_id', author);
     if (cursor) query = query.lt('created_at', cursor);
 
     const { data: posts, error } = await query;

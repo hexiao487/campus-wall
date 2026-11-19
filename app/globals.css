@@ -1523,3 +1523,82 @@ textarea {
     display: none;
   }
 }
+
+/* 个人主页 */
+.avatar-link {
+  text-decoration: none;
+  display: inline-grid;
+  place-items: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.avatar-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.author-link {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.author-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.profile-card {
+  padding: 24px;
+  margin-top: 26px;
+}
+
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  font-size: 24px;
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.profile-stats {
+  display: flex;
+  gap: 18px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.profile-stats b {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
