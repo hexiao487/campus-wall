@@ -17,7 +17,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [tab, setTab] = useState('email');
-  const [mailReady, setMailReady] = useState(false);
+  const [mailReady, setMailReady] = useState(true);
 
   // 邮箱验证码
   const [email, setEmail] = useState('');
@@ -38,7 +38,7 @@ export default function LoginPage() {
     fetch('/api/auth/email/status')
       .then((r) => r.json())
       .then((d) => setMailReady(Boolean(d.enabled)))
-      .catch(() => setMailReady(false));
+      .catch(() => setMailReady(true));
   }, []);
 
   useEffect(() => {
