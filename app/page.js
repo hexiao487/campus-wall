@@ -52,10 +52,6 @@ export default function HomePage() {
       window.location.href = '/login';
       return;
     }
-    if (me.role === 'admin') {
-      setNotice('管理员账号不参与点赞，请用普通账号操作～');
-      return;
-    }
     const wasLiked = liked.includes(post.id);
     // 乐观更新
     setLiked((prev) => (wasLiked ? prev.filter((id) => id !== post.id) : [...prev, post.id]));

@@ -15,6 +15,9 @@ export default function SiteHeader({ me, onLogout }) {
         </Link>
 
         <div className="header-right">
+          <Link className="header-link" href="/chat">
+            群聊
+          </Link>
           {me ? (
             <>
               <div className="user-chip">

@@ -88,7 +88,7 @@ export async function POST(request) {
     const { data: created, error } = await supabase
       .from('posts')
       .insert({
-        author_id: user.role === 'admin' ? null : user.id,
+        author_id: user.id || null,
         author_name: authorName,
         content: content || '',
         image_url: imageUrl

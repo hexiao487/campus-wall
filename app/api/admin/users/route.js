@@ -19,6 +19,7 @@ export async function GET(request) {
     const { data, error } = await supabase
       .from('users')
       .select('id, username, role, is_muted, created_at')
+      .eq('role', 'user')
       .order('created_at', { ascending: false })
       .limit(200);
 
