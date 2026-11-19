@@ -1,13 +1,21 @@
 :root {
+  color-scheme: dark;
+
   --brand: #ff5f7e;
   --brand-2: #ff8a5b;
-  --blue: #5b8def;
-  --ink: #20232b;
-  --ink-soft: #5b6070;
-  --line: rgba(32, 35, 43, 0.08);
-  --card: #ffffff;
+  --blue: #7ea6ff;
+
+  --ink: #e9ecf3;
+  --ink-soft: #959dae;
+
+  --bg: #0a0b0f;
+  --card: #14161d;
+  --card-2: #1a1d26;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
   --radius: 18px;
-  --shadow: 0 10px 30px rgba(32, 35, 43, 0.06);
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -24,9 +32,10 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   color: var(--ink);
-  background: radial-gradient(1100px 560px at 8% -12%, rgba(255, 138, 91, 0.18), transparent 62%),
-    radial-gradient(900px 480px at 102% -6%, rgba(91, 141, 239, 0.16), transparent 60%),
-    linear-gradient(180deg, #fffaf9 0%, #f6f7fc 100%);
+  background: radial-gradient(1100px 560px at 8% -12%, rgba(255, 95, 126, 0.16), transparent 62%),
+    radial-gradient(900px 480px at 102% -6%, rgba(91, 141, 239, 0.14), transparent 60%),
+    radial-gradient(700px 420px at 50% 120%, rgba(255, 138, 91, 0.08), transparent 65%),
+    linear-gradient(180deg, #0a0b0f 0%, #0d0f16 100%);
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -52,8 +61,18 @@ textarea {
   color: var(--ink);
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: rgba(233, 236, 243, 0.38);
+}
+
 textarea {
   resize: vertical;
+}
+
+::selection {
+  background: rgba(255, 95, 126, 0.35);
+  color: #fff;
 }
 
 /* ---------------- 布局 ---------------- */
@@ -68,7 +87,7 @@ textarea {
   top: 0;
   z-index: 30;
   backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(10, 11, 15, 0.72);
   border-bottom: 1px solid var(--line);
 }
 
@@ -100,7 +119,7 @@ textarea {
   color: #fff;
   font-size: 15px;
   font-weight: 900;
-  box-shadow: 0 6px 14px rgba(255, 95, 126, 0.35);
+  box-shadow: 0 6px 18px rgba(255, 95, 126, 0.4);
 }
 
 .brand-sub {
@@ -124,7 +143,7 @@ textarea {
   gap: 8px;
   padding: 5px 12px 5px 5px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
   font-size: 13px;
   font-weight: 600;
@@ -172,7 +191,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px 14px;
-  background: #fbfbfd;
+  background: var(--card-2);
   outline: none;
   line-height: 1.6;
   transition: border-color 0.18s, background 0.18s;
@@ -180,7 +199,7 @@ textarea {
 
 .composer textarea:focus {
   border-color: rgba(255, 95, 126, 0.5);
-  background: #fff;
+  background: #1d2029;
 }
 
 .composer-bar {
@@ -212,29 +231,30 @@ textarea {
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
-  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s, background 0.15s;
   white-space: nowrap;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
   color: #fff;
-  box-shadow: 0 8px 18px rgba(255, 95, 126, 0.28);
+  box-shadow: 0 10px 24px rgba(255, 95, 126, 0.32);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(255, 95, 126, 0.34);
+  box-shadow: 0 12px 28px rgba(255, 95, 126, 0.42);
 }
 
 .btn-ghost {
-  background: #fff;
+  background: var(--card-2);
   border: 1px solid var(--line);
   color: var(--ink);
 }
 
 .btn-ghost:hover {
-  border-color: rgba(32, 35, 43, 0.18);
+  border-color: var(--line-strong);
+  background: #1f232d;
 }
 
 .btn-mini {
@@ -245,17 +265,17 @@ textarea {
 }
 
 .btn-danger {
-  color: #e03e52;
-  background: #fff1f3;
-  border: 1px solid rgba(224, 62, 82, 0.18);
+  color: #ff8093;
+  background: rgba(224, 62, 82, 0.12);
+  border: 1px solid rgba(224, 62, 82, 0.28);
 }
 
 .btn-danger:hover {
-  background: #ffe4e8;
+  background: rgba(224, 62, 82, 0.2);
 }
 
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -283,7 +303,7 @@ textarea {
   font-weight: 800;
   font-size: 16px;
   flex: none;
-  box-shadow: 0 4px 12px rgba(32, 35, 43, 0.14);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
 }
 
 .post-meta {
@@ -327,7 +347,7 @@ textarea {
   object-fit: cover;
   border-radius: 14px;
   margin-top: 12px;
-  background: #f2f3f6;
+  background: #1b1e26;
 }
 
 .post-actions {
@@ -336,7 +356,7 @@ textarea {
   gap: 8px;
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px dashed rgba(32, 35, 43, 0.08);
+  border-top: 1px dashed var(--line);
 }
 
 .act {
@@ -349,39 +369,40 @@ textarea {
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
-  background: #f7f8fb;
+  background: var(--card-2);
   transition: background 0.15s, color 0.15s, transform 0.15s;
 }
 
 .act:hover {
-  background: #eef0f6;
+  background: #22262f;
   color: var(--ink);
 }
 
 .act.liked {
   color: var(--brand);
-  background: #fff0f3;
+  background: rgba(255, 95, 126, 0.14);
 }
 
 .act.liked:hover {
-  background: #ffe4ea;
+  background: rgba(255, 95, 126, 0.22);
 }
 
 .act-danger {
   margin-left: auto;
-  color: #e03e52;
-  background: #fff3f4;
+  color: #ff8093;
+  background: rgba(224, 62, 82, 0.12);
 }
 
 .act-danger:hover {
-  background: #ffe6e9;
-  color: #c62b3f;
+  background: rgba(224, 62, 82, 0.2);
+  color: #ff9dab;
 }
 
 /* ---------------- 评论 ---------------- */
 .comments {
   margin-top: 12px;
-  background: #f8f9fc;
+  background: var(--card-2);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
 }
@@ -416,12 +437,12 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0 14px;
-  background: #fff;
+  background: #1d2029;
   outline: none;
 }
 
 .comment-form input:focus {
-  border-color: rgba(91, 141, 239, 0.5);
+  border-color: rgba(126, 166, 255, 0.55);
 }
 
 .empty {
@@ -450,13 +471,14 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0 14px;
-  background: #fbfbfd;
+  background: var(--card-2);
   outline: none;
+  transition: border-color 0.18s, background 0.18s;
 }
 
 .field input:focus {
   border-color: rgba(255, 95, 126, 0.5);
-  background: #fff;
+  background: #1d2029;
 }
 
 .alert {
@@ -464,15 +486,15 @@ textarea {
   padding: 10px 14px;
   font-size: 13px;
   margin-bottom: 14px;
-  background: #fff1f3;
-  color: #c62b3f;
-  border: 1px solid rgba(224, 62, 82, 0.16);
+  background: rgba(224, 62, 82, 0.14);
+  color: #ff9dab;
+  border: 1px solid rgba(224, 62, 82, 0.3);
 }
 
 .alert.ok {
-  background: #eefaf1;
-  color: #147a43;
-  border-color: rgba(20, 122, 67, 0.18);
+  background: rgba(20, 200, 110, 0.12);
+  color: #5ee2a0;
+  border-color: rgba(20, 200, 110, 0.28);
 }
 
 /* ---------------- 登录页 ---------------- */
@@ -502,7 +524,8 @@ textarea {
   display: flex;
   gap: 6px;
   padding: 4px;
-  background: #f4f5f9;
+  background: var(--card-2);
+  border: 1px solid var(--line);
   border-radius: 999px;
   margin-bottom: 20px;
 }
@@ -517,9 +540,9 @@ textarea {
 }
 
 .tabs button.active {
-  background: #fff;
+  background: #242834;
   color: var(--ink);
-  box-shadow: 0 2px 8px rgba(32, 35, 43, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .auth-foot {
@@ -532,6 +555,51 @@ textarea {
 .auth-foot a {
   color: var(--blue);
   font-weight: 600;
+}
+
+/* ---------------- 微信登录 ---------------- */
+.wechat-btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.wechat-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(22, 163, 74, 0.38);
+}
+
+.wechat-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
 /* ---------------- 管理端 ---------------- */
@@ -547,7 +615,7 @@ textarea {
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
-  background: #fff;
+  background: var(--card-2);
   border: 1px solid var(--line);
   color: var(--ink-soft);
 }
@@ -556,7 +624,7 @@ textarea {
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 8px 18px rgba(255, 95, 126, 0.26);
+  box-shadow: 0 10px 24px rgba(255, 95, 126, 0.3);
 }
 
 .row {
@@ -595,8 +663,8 @@ textarea {
 .tag-muted {
   font-size: 11px;
   font-weight: 700;
-  color: #c62b3f;
-  background: #ffe9ec;
+  color: #ff9dab;
+  background: rgba(224, 62, 82, 0.16);
   border-radius: 999px;
   padding: 2px 8px;
 }
@@ -604,8 +672,8 @@ textarea {
 .tag-ok {
   font-size: 11px;
   font-weight: 700;
-  color: #147a43;
-  background: #e9f8ee;
+  color: #5ee2a0;
+  background: rgba(20, 200, 110, 0.14);
   border-radius: 999px;
   padding: 2px 8px;
 }
@@ -623,7 +691,7 @@ textarea {
   font-size: 13px;
   color: var(--ink-soft);
   line-height: 1.7;
-  background: #fff;
+  background: var(--card-2);
   border: 1px dashed var(--line);
   border-radius: 14px;
   padding: 12px 14px;

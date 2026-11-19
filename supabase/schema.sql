@@ -9,9 +9,11 @@ create extension if not exists "pgcrypto";
 create table if not exists public.users (
   id            uuid primary key default gen_random_uuid(),
   username      text not null unique,
-  password_hash text not null,
-  role          text not null default 'user',   -- user / admin
-  is_muted      boolean not null default false, -- 是否被禁言
+  password_hash text,                            -- 微信登录用户没有密码，可为空
+  role          text not null default 'user',    -- user / admin
+  is_muted      boolean not null default false,  -- 是否被禁言
+  wechat_openid text unique,                     -- 微信开放平台 openid（扫码登录用）
+  avatar_url    text,
   created_at    timestamptz not null default now()
 );
 

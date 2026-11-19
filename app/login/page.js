@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+
+const WX_ERRORS = {
+  unconfigured: '微信登录还没配置：需要微信开放平台的网站应用 AppID / AppSecret',
+  state: '微信授权已过期，请重新扫码',
+  token: '微信授权校验失败，请重试',
+  create: '建档失败，请稍后再试'
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +18,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [wxEnabled, setWxEnabled] = useState(false);
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('wechat');
+    if (q && WX_ERRORS[q]) setErr(WX_ERRORS[q]);
+
+    fetch('/api/auth/wechat/status')
+      .then((r) => r.json())
+      .then((d) => setWxEnabled(Boolean(d.enabled)))
+      .catch(() => setWxEnabled(false));
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -71,6 +89,22 @@ export default function LoginPage() {
         </div>
 
         {err && <div className="alert">{err}</div>}
+
+        <button
+          type="button"
+          className="wechat-btn"
+          disabled={!wxEnabled}
+          onClick={() => {
+            window.location.href = '/api/auth/wechat/start';
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M8.7 3C4.8 3 1.6 5.7 1.6 9c0 1.9 1 3.6 2.7 4.7l-.7 2.1 2.4-1.2c.9.3 1.8.4 2.8.4h.5c-.1-.5-.2-.9-.2-1.4 0-3.3 2.9-6 6.5-6 .3 0 .5 0 .8.1C10.9 5 9.9 3 8.7 3zM6 5.6c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zm5.6 0c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zM22.4 13c0-2.7-2.6-4.9-5.8-4.9s-5.8 2.2-5.8 4.9 2.6 4.9 5.8 4.9c.7 0 1.4-.1 2-.3l2 1-.5-1.7c1.6-.9 2.6-2.3 2.6-3.9zM14.7 12c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9 .4-.9.9-.9zm4.2 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9 .4-.9.9-.9z" />
+          </svg>
+          {wxEnabled ? '微信扫码登录' : '微信扫码登录（未配置）'}
+        </button>
+
+        <div className="or-divider">或用账号密码</div>
 
         <form onSubmit={submit}>
           <div className="field">
