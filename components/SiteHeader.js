@@ -12,7 +12,7 @@ export default function SiteHeader({ me, onLogout }) {
           <Link className="brand" href="/">
             <span className="brand-logo">墙</span>
             校园墙
-            <span className="ver-badge">V2.1</span>
+            <span className="ver-badge">V3</span>
           </Link>
 
           <div className="header-right">
