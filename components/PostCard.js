@@ -2,7 +2,7 @@
 
 import { imgSrc } from '@/lib/img';
 import { parseImages } from '@/lib/images';
-import { isVideo, mediaSrc } from '@/lib/media';
+import { isVideo, mediaSrc, videoMime } from '@/lib/media';
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
@@ -34,12 +34,13 @@ function FeedVideo({ url, href }) {
       <video
         ref={ref}
         className="post-video"
-        src={mediaSrc(url)}
         muted
         loop
         playsInline
         preload="metadata"
-      />
+      >
+        <source src={mediaSrc(url)} type={videoMime(mediaSrc(url))} />
+      </video>
       <span className="post-video-badge">▶ 视频</span>
     </Link>
   );

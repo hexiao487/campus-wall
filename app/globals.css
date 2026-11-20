@@ -3207,3 +3207,11 @@ a.user-chip:active {
   border-radius: 16px;
   background: #000;
 }
+
+.detail-video-open {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+  text-decoration: underline;
+}

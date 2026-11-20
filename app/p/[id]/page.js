@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import SiteHeader from '@/components/SiteHeader';
 import { imgSrc } from '@/lib/img';
 import { parseImages } from '@/lib/images';
-import { isVideo, mediaSrc } from '@/lib/media';
+import { isVideo, mediaSrc, videoMime } from '@/lib/media';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
 export default function PostDetailPage() {
@@ -176,12 +176,17 @@ export default function PostDetailPage() {
                 {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                 <video
                   className="detail-cover detail-video"
-                  src={mediaSrc(video)}
                   controls
                   autoPlay
+                  muted
                   playsInline
                   preload="metadata"
-                />
+                >
+                  <source src={mediaSrc(video)} type={videoMime(mediaSrc(video))} />
+                </video>
+                <a className="detail-video-open" href={mediaSrc(video)} target="_blank" rel="noreferrer">
+                  打不开？点这里直接播放
+                </a>
               </div>
             )}
 
