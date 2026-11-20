@@ -84,6 +84,25 @@ export default function AdminPage() {
     }
   }
 
+  async function changeRole(user) {
+    const nextRole = user.role === 'admin' ? 'user' : 'admin';
+    const tip = nextRole === 'admin' ? `确定把「${user.username}」设为管理员吗？` : `确定取消「${user.username}」的管理员身份吗？`;
+    if (!window.confirm(tip)) return;
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: nextRole })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '操作失败');
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role: data.user.role } : u)));
+      setNotice(nextRole === 'admin' ? `已把 ${user.username} 设为管理员` : `已取消 ${user.username} 的管理员身份`);
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     setMe(null);
@@ -242,6 +261,7 @@ export default function AdminPage() {
                   <div className="row-main">
                     <div className="row-title">
                       {user.username}{' '}
+                      {user.role === 'admin' && <span className="badge-admin">管理员</span>}
                       {user.is_muted ? (
                         <span className="tag-muted">已禁言</span>
                       ) : (
@@ -250,6 +270,9 @@ export default function AdminPage() {
                     </div>
                     <div className="row-sub">注册于 {timeAgo(user.created_at)}</div>
                   </div>
+                  <button className="btn btn-ghost btn-mini" onClick={() => changeRole(user)}>
+                    {user.role === 'admin' ? '取消管理员' : '设为管理员'}
+                  </button>
                   <button
                     className={`btn btn-mini ${user.is_muted ? 'btn-ghost' : 'btn-danger'}`}
                     onClick={() => toggleMute(user)}
