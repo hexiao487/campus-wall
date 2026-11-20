@@ -3090,3 +3090,43 @@ a.user-chip:active {
 .menu-fab:active {
   transform: scale(0.9);
 }
+
+/* V4.64beta 顶部一行：菜单左、搜索右，手机端不换行 */
+.header-min {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.header-min .header-right {
+  width: auto;
+  flex: 0 0 auto;
+  order: 0;
+  margin-left: 0;
+  overflow: visible;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+@media (max-width: 760px) {
+  .site-header .header-inner.header-min {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 7px 10px;
+    align-items: center;
+  }
+
+  .header-min .header-right {
+    width: auto;
+    order: 0;
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
+
+  .header-min .menu-fab,
+  .header-min .search-fab {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+  }
+}
