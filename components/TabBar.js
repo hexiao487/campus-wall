@@ -36,6 +36,12 @@ const ICONS = {
       <path d="M12 18.5v2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   ),
+  me: (
+    <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M4.8 20c.8-4.2 3.6-6.2 7.2-6.2s6.4 2 7.2 6.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
   compose: (
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path d="M4 20l1-4.2 10-10 3.2 3.2-10 10L4 20z" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
@@ -84,7 +90,8 @@ export default function TabBar({ me }) {
     { key: 'chat', href: '/chat', label: '群聊', icon: ICONS.chat, active: pathname.startsWith('/chat') },
     { key: 'friends', href: '/friends', label: '好友', icon: ICONS.friends, active: pathname.startsWith('/friends') },
     { key: 'dm', href: '/messages', label: '消息', icon: ICONS.dm, active: pathname.startsWith('/messages'), badge: unread.dm + unread.mention },
-    { key: 'ptt', href: '/ptt', label: '对讲机', icon: ICONS.ptt, active: pathname.startsWith('/ptt') }
+    { key: 'ptt', href: '/ptt', label: '对讲机', icon: ICONS.ptt, active: pathname.startsWith('/ptt') },
+    { key: 'me', href: '/me', label: '我的', icon: ICONS.me, active: pathname.startsWith('/me') }
   ];
 
   return (
