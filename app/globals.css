@@ -2731,8 +2731,19 @@ a.user-chip:active {
   padding: 6px 2px 14px;
 }
 .detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.65);
   font-size: 13px;
-  color: #666;
+  font-weight: 600;
+  color: #333;
   text-decoration: none;
 }
 .detail-top-title {
@@ -2762,10 +2773,15 @@ a.user-chip:active {
   color: #111;
 }
 .detail-del {
-  border: 0;
-  background: transparent;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   color: #d33b3b;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
 .detail-gallery {
@@ -2817,12 +2833,16 @@ a.user-chip:active {
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 .detail-act {
-  padding: 8px 13px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #fff;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.65);
   font-size: 13px;
-  color: #444;
+  font-weight: 600;
+  color: #333;
   cursor: pointer;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -2878,7 +2898,8 @@ a.user-chip:active {
 .detail-compose {
   display: flex;
   gap: 8px;
-  padding: 10px 0 20px;
+  padding: 10px 0 26px;
+  margin-bottom: 8px;
 }
 .detail-compose input {
   flex: 1;
@@ -2901,5 +2922,11 @@ a.user-chip:active {
   }
   .detail-body {
     font-size: 14px;
+  }
+  .detail-compose {
+    padding-bottom: 12px;
+  }
+  .shell {
+    padding-bottom: 132px;
   }
 }
