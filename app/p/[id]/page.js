@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import SiteHeader from '@/components/SiteHeader';
 import { imgSrc } from '@/lib/img';
 import { parseImages } from '@/lib/images';
+import { isVideo, mediaSrc } from '@/lib/media';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
 export default function PostDetailPage() {
@@ -129,6 +130,7 @@ export default function PostDetailPage() {
   }
 
   const images = post ? parseImages(post.image_url) : [];
+  const video = images.find(isVideo);
   const isAdminAuthor = post && (post.author_role === 'admin' || !post.author_id);
   const showBadge = isAdminAuthor && post.author_name !== '管理员';
   const canDelete = post && (me?.role === 'admin' || (me?.id && post.author_id === me.id));
@@ -169,7 +171,21 @@ export default function PostDetailPage() {
               {canDelete && <button className="detail-del" onClick={removePost}>删除</button>}
             </div>
 
-            {images.length > 0 && (
+            {video && (
+              <div className="detail-gallery">
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                <video
+                  className="detail-cover detail-video"
+                  src={mediaSrc(video)}
+                  controls
+                  autoPlay
+                  playsInline
+                  preload="metadata"
+                />
+              </div>
+            )}
+
+            {!video && images.length > 0 && (
               <div className="detail-gallery">
                 <img className="detail-cover" src={imgSrc(images[viewer] || images[0])} alt="帖子配图" />
                 {images.length > 1 && (

@@ -2,9 +2,48 @@
 
 import { imgSrc } from '@/lib/img';
 import { parseImages } from '@/lib/images';
+import { isVideo, mediaSrc } from '@/lib/media';
 
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
+
+/** feed 里的视频：进入视口自动静音播放，点一下进详情页听声音 */
+function FeedVideo({ url, href }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const ob = new IntersectionObserver(
+      (entries) => {
+        for (const en of entries) {
+          if (en.isIntersecting) el.play().catch(() => {});
+          else el.pause();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, []);
+
+  return (
+    <Link className="post-video-wrap" href={href} aria-label="看视频帖">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <video
+        ref={ref}
+        className="post-video"
+        src={mediaSrc(url)}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+      />
+      <span className="post-video-badge">▶ 视频</span>
+    </Link>
+  );
+}
 
 export default function PostCard({
   post,
@@ -55,23 +94,29 @@ export default function PostCard({
         </div>
       </div>
 
-      <Link className="post-open" href={href}>
-        {post.content && <p className="post-body">{post.content}</p>}
-        {images.length > 0 && (
-          <div className={`post-images grid-${Math.min(images.length, 3)}`}>
-            {images.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={url + i}
-                className="post-image"
-                src={imgSrc(url)}
-                alt={`帖子配图 ${i + 1}`}
-                loading="lazy"
-              />
-            ))}
-          </div>
-        )}
-      </Link>
+      {(post.content || images.some((u) => !isVideo(u))) && (
+        <Link className="post-open" href={href}>
+          {post.content && <p className="post-body">{post.content}</p>}
+          {images.some((u) => !isVideo(u)) && (
+            <div className={`post-images grid-${Math.min(images.filter((u) => !isVideo(u)).length, 3)}`}>
+              {images.filter((u) => !isVideo(u)).map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={url + i}
+                  className="post-image"
+                  src={imgSrc(url)}
+                  alt={`帖子配图 ${i + 1}`}
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          )}
+        </Link>
+      )}
+
+      {images.filter(isVideo).map((url, i) => (
+        <FeedVideo key={url + i} url={url} href={href} />
+      ))}
 
       <div className="post-actions">
         <button

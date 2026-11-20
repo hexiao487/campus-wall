@@ -5,11 +5,15 @@ import { imgSrc } from '@/lib/img';
 import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '@/lib/imageCompress';
 import { joinImages } from '@/lib/images';
+import { toVideoTag, mediaSrc } from '@/lib/media';
 
 export default function Composer({
   initialText = '', me, onPublished }) {
   const [content, setContent] = useState(initialText || '');
   const [imageList, setImageList] = useState([]);
+  const [video, setVideo] = useState(null);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
@@ -17,6 +21,7 @@ export default function Composer({
   const [suggestions, setSuggestions] = useState([]);
   const [mentionIds, setMentionIds] = useState([]);
   const fileRef = useRef(null);
+  const videoRef = useRef(null);
   const textRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -72,6 +77,10 @@ export default function Composer({
   async function pickImage(e) {
     const files = Array.from(e.target.files || []).slice(0, Math.max(0, 4 - imageList.length));
     if (!files.length) return;
+    if (video) {
+      setErr('一次只能发一个视频或一组图片，视频已移除');
+      setVideo(null);
+    }
     setErr('');
     setUploading(true);
     try {
@@ -98,9 +107,52 @@ export default function Composer({
     }
   }
 
+  async function pickVideo(e) {
+    const file = (e.target.files || [])[0];
+    e.target.value = '';
+    if (!file) return;
+    setErr('');
+    if (file.size > 50 * 1024 * 1024) {
+      setErr('视频不能超过 50MB，先用相册/剪辑 App 压一下再传');
+      return;
+    }
+    if (imageList.length) setImageList([]);
+    setVideoUploading(true);
+    setVideoProgress(0);
+    try {
+      const signRes = await fetch('/api/upload/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: file.type || 'video/mp4', size: file.size })
+      });
+      const sign = await signRes.json();
+      if (!signRes.ok) throw new Error(sign.error || '申请上传失败');
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', sign.signedUrl);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+        xhr.setRequestHeader('x-upsert', 'true');
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) setVideoProgress(Math.round((ev.loaded / ev.total) * 100));
+        };
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('上传失败，请重试')));
+        xhr.onerror = () => reject(new Error('上传失败，请检查网络'));
+        xhr.send(file);
+      });
+
+      setVideo({ url: sign.url, type: file.type, name: file.name });
+    } catch (e2) {
+      setErr(e2.message);
+    } finally {
+      setVideoUploading(false);
+      setVideoProgress(0);
+    }
+  }
+
   async function publish() {
-    if (sending || uploading) return;
-    if (!content.trim() && imageList.length === 0) {
+    if (sending || uploading || videoUploading) return;
+    if (!content.trim() && imageList.length === 0 && !video) {
       setErr('说点什么再发吧');
       return;
     }
@@ -111,12 +163,17 @@ export default function Composer({
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content.trim(), imageUrl: joinImages(imageList), mentions: active })
+        body: JSON.stringify({
+          content: content.trim(),
+          imageUrl: video ? toVideoTag(video.url) : joinImages(imageList),
+          mentions: active
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '发布失败');
       setContent('');
       setImageList([]);
+      setVideo(null);
       setMentionIds([]);
       onPublished?.(data.post);
     } catch (e3) {
@@ -208,15 +265,34 @@ export default function Composer({
         </div>
       )}
 
+      {video && (
+        <div className="composer-video">
+          <video src={mediaSrc(video.url)} controls playsInline preload="metadata" />
+          <button type="button" className="composer-image-remove" onClick={() => setVideo(null)}>
+            移除
+          </button>
+        </div>
+      )}
+      {videoUploading && <div className="composer-video-bar">视频上传中… {videoProgress}%</div>}
+
       <div className="composer-bar">
         <button type="button" className="btn btn-ghost btn-mini" onClick={() => fileRef.current?.click()} disabled={uploading || muted}>
           {uploading ? '上传中…' : `📷 配图 ${imageList.length}/4`}
         </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-mini"
+          onClick={() => videoRef.current?.click()}
+          disabled={videoUploading || muted}
+        >
+          {videoUploading ? '上传中…' : '🎬 视频'}
+        </button>
         <input ref={fileRef} type="file" accept="image/*" multiple onChange={pickImage} hidden />
+        <input ref={videoRef} type="file" accept="video/mp4,video/quicktime,video/webm,video/*" onChange={pickVideo} hidden />
         <span className="composer-count">
           {content.length}/{max}
         </span>
-        <button className="btn btn-primary" onClick={publish} disabled={sending || uploading || muted}>
+        <button className="btn btn-primary" onClick={publish} disabled={sending || uploading || videoUploading || muted}>
           {sending ? '发布中…' : '发布'}
         </button>
       </div>
