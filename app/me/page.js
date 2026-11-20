@@ -117,7 +117,7 @@ export default function MePage() {
                   {me.username}
                   {me.role === 'admin' && <span className="badge-admin">管理员</span>}
                 </h1>
-                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V4.75PRO</span></p>
+                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V5.0PRO</span></p>
                 <div className="me-stats">
                   <span><b>{cache.mine ? cache.mine.length : '—'}</b> 帖子</span>
                   <span><b>{cache.saved ? cache.saved.length : '—'}</b> 收藏</span>
