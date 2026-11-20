@@ -227,23 +227,6 @@ export default function HomePage() {
           <p>把想说的话贴上来，会有人看见的。</p>
         </div>
 
-        <div className="entry-row">
-          <Link className="entry" href="/hot">🔥 热榜</Link>
-          <Link className="entry" href="/search">🔍 搜索</Link>
-          <Link className="entry" href="/saved">⭐ 我的收藏</Link>
-        </div>
-
-        {tags.length > 0 && (
-          <div className="tag-strip">
-            {tags.map((t) => (
-              <Link key={t.tag} className="tag-item" href={`/t/${encodeURIComponent(t.tag)}`}>
-                #{t.tag}
-                <span className="tag-count">{t.count}</span>
-              </Link>
-            ))}
-          </div>
-        )}
-
         {pinned.length > 0 && (
           <div className="pinned-box">
             <div className="pinned-title">📌 置顶公告</div>

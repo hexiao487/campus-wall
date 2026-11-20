@@ -1,45 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { initial, avatarStyle } from '@/lib/format';
 import TabBar from '@/components/TabBar';
 
-export default function SiteHeader({ me, onLogout }) {
+export default function SiteHeader({ me }) {
   return (
     <>
       <header className="site-header">
-        <div className="header-inner">
-          <Link className="brand" href="/">
-            <span className="brand-logo">墙</span>
-            校园墙
-            <span className="ver-badge">V4.2</span>
-          </Link>
-
+        <div className="header-inner header-min">
+          {!me && (
+            <Link className="btn btn-primary btn-mini" href="/login">
+              登录 / 注册
+            </Link>
+          )}
           <div className="header-right">
-            <a className="header-link" href="/downloads/campus-wall-v3.apk" download>
-              下载 App
-            </a>
-            {me ? (
-              <>
-                <Link className="user-chip" href={`/u/${me.id}`} title="我的主页">
-                  <span
-                    className="avatar"
-                    style={{ ...avatarStyle(me.username, me.avatar_url), width: 26, height: 26, borderRadius: 9, fontSize: 12 }}
-                  >
-                    {!me.avatar_url && initial(me.username)}
-                  </span>
-                  {me.username}
-                  {me.role === 'admin' && <span className="badge-admin">管理员</span>}
-                </Link>
-                <button className="btn btn-ghost btn-mini" onClick={onLogout}>
-                  退出
-                </button>
-              </>
-            ) : (
-              <Link className="btn btn-primary btn-mini" href="/login">
-                登录 / 注册
-              </Link>
-            )}
+            <Link className="search-fab" href="/search" aria-label="搜索">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" strokeWidth="1.9" />
+                <path d="M15 15 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+              </svg>
+            </Link>
           </div>
         </div>
       </header>

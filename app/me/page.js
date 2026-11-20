@@ -212,7 +212,7 @@ export default function MePage() {
                   {me.username}
                   {me.role === 'admin' && <span className="badge-admin">管理员</span>}
                 </h1>
-                <p>{me.id ? '我的个人页面' : ''}</p>
+                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V4.5beta</span></p>
                 <div className="me-stats">
                   <span><b>{cache.mine ? cache.mine.length : '—'}</b> 帖子</span>
                   <span><b>{cache.saved ? cache.saved.length : '—'}</b> 收藏</span>
@@ -316,6 +316,9 @@ export default function MePage() {
 
         <div className="page-foot">
           <Link href="/">← 回首页</Link>
+          <a className="header-link" href="/downloads/campus-wall-v3.apk" download style={{ marginLeft: 14 }}>
+            下载 App
+          </a>
         </div>
       </main>
     </>
