@@ -1,5 +1,7 @@
 'use client';
 
+import { imgSrc } from '@/lib/img';
+
 import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '@/lib/imageCompress';
 
@@ -186,7 +188,7 @@ export default function Composer({ me, onPublished }) {
       {imageUrl && (
         <div className="composer-image">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imageUrl} alt="配图预览" />
+          <img src={imgSrc(imageUrl)} alt="配图预览" />
           <button type="button" className="composer-image-remove" onClick={() => setImageUrl('')}>
             移除
           </button>

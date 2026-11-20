@@ -5,6 +5,7 @@ import { compressImage } from '@/lib/imageCompress';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { imgSrc } from '@/lib/img';
 import SiteHeader from '@/components/SiteHeader';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
@@ -322,7 +323,7 @@ export default function GroupRoomPage() {
                               {m.content && <div>{m.content}</div>}
                               {m.image_url && (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img className="chat-image" src={m.image_url} alt="图片消息" loading="lazy" />
+                                <img className="chat-image" src={imgSrc(m.image_url)} alt="图片消息" loading="lazy" />
                               )}
                             </div>
                           )}
@@ -336,7 +337,7 @@ export default function GroupRoomPage() {
               {imageUrl && (
                 <div className="chat-preview">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imageUrl} alt="待发送图片" />
+                  <img src={imgSrc(imageUrl)} alt="待发送图片" />
                   <button className="btn btn-ghost btn-mini" onClick={() => setImageUrl('')}>
                     移除
                   </button>

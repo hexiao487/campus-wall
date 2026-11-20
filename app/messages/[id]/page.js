@@ -5,6 +5,7 @@ import { compressImage } from '@/lib/imageCompress';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { imgSrc } from '@/lib/img';
 import SiteHeader from '@/components/SiteHeader';
 import { avatarStyle, initial, timeAgo } from '@/lib/format';
 
@@ -213,7 +214,7 @@ export default function DmRoomPage() {
           {m.kind === 'text' && <div>{m.content}</div>}
           {m.kind === 'image' && (
             <a href={m.image_url} target="_blank" rel="noreferrer">
-              <img className="dm-image" src={m.image_url} alt="图片" />
+              <img className="dm-image" src={imgSrc(m.image_url)} alt="图片" />
             </a>
           )}
           {m.kind === 'audio' && (

@@ -1,5 +1,7 @@
 'use client';
 
+import { imgSrc } from '@/lib/img';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
@@ -109,7 +111,7 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteCo
       {post.content && <p className="post-body">{post.content}</p>}
       {post.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="post-image" src={post.image_url} alt="帖子配图" loading="lazy" />
+        <img className="post-image" src={imgSrc(post.image_url)} alt="帖子配图" loading="lazy" />
       )}
 
       <div className="post-actions">
