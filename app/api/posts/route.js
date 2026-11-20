@@ -28,6 +28,19 @@ export async function GET(request) {
 
     const rows = posts || [];
 
+    // 回填作者角色，用于昵称后的「管理员」标记
+    try {
+      const ids = Array.from(new Set(rows.map((p) => p.author_id).filter(Boolean)));
+      if (ids.length) {
+        const { data: authors } = await supabase.from('users').select('id, role').in('id', ids);
+        const roleMap = {};
+        for (const a of authors || []) roleMap[a.id] = a.role;
+        for (const p of rows) p.author_role = roleMap[p.author_id] || 'user';
+      }
+    } catch {
+      /* 角色回填失败不影响帖子列表 */
+    }
+
     // 当前用户点赞过哪些帖子
     let likedIds = [];
     if (user?.id && rows.length) {
@@ -69,22 +82,25 @@ export async function POST(request) {
       return NextResponse.json({ error: `内容最多 ${MAX_LEN} 字` }, { status: 400 });
     }
 
-    let authorName = user.username;
-    if (user.role === 'user') {
+    let authorName = user.username || '同学';
+    let authorRole = user.role === 'admin' ? 'admin' : 'user';
+    if (user.id) {
       const { data: me } = await supabase
         .from('users')
-        .select('is_muted, username')
+        .select('is_muted, username, role')
         .eq('id', user.id)
         .maybeSingle();
       if (!me) {
         return NextResponse.json({ error: '账号不存在，请重新登录' }, { status: 401 });
       }
-      if (me.is_muted) {
+      if (me.role === 'user' && me.is_muted) {
         return NextResponse.json({ error: '你已被管理员禁言，暂时不能发帖' }, { status: 403 });
       }
       authorName = me.username;
+      authorRole = me.role === 'admin' ? 'admin' : 'user';
     } else {
       authorName = '管理员';
+      authorRole = 'admin';
     }
 
     const { data: created, error } = await supabase
@@ -119,7 +135,10 @@ export async function POST(request) {
       );
     }
 
-    return NextResponse.json({ post: { ...created, liked: false }, mentions: targets.length });
+    return NextResponse.json({
+      post: { ...created, author_role: authorRole, liked: false },
+      mentions: targets.length
+    });
   } catch (e) {
     return NextResponse.json({ error: '发布失败：' + e.message }, { status: 500 });
   }
