@@ -102,7 +102,7 @@ export default function AddFriendPage() {
                 {!u.avatar_url && initial(u.username)}
               </Link>
               <div className="user-row-main">
-                <b>{u.username}{u.role === 'admin' && <span className="badge-admin">管理员</span>}</b>
+                <b>{u.username}{u.role === 'admin' && u.username !== '管理员' && <span className="badge-admin">管理员</span>}</b>
                 <span>
                   {u.friend ? '已是好友' : u.pendingOut || u.friend_status === 'pending' ? '已申请，等对方同意' : u.pendingIn ? '对方已申请你，去好友页同意' : '还没加好友'}
                 </span>

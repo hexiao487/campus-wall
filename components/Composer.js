@@ -219,7 +219,7 @@ export default function Composer({
               <button key={u.id} type="button" className="mention-item" onClick={() => pickMention(u)}>
                 <span className="mention-avatar">{u.username.slice(0, 1)}</span>
                 {u.username}
-                {u.role === 'admin' && <span className="badge-admin">管理员</span>}
+                {u.role === 'admin' && u.username !== '管理员' && <span className="badge-admin">管理员</span>}
               </button>
             ))}
           </div>

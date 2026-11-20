@@ -271,7 +271,7 @@ export default function DmRoomPage() {
               {peer ? (
                 <Link className="author-link" href={`/u/${peer.id}`}>
                   {peer.username}
-                  {peer.role === 'admin' && <span className="badge-admin">管理员</span>}
+                  {peer.role === 'admin' && peer.username !== '管理员' && <span className="badge-admin">管理员</span>}
                 </Link>
               ) : (
                 '聊天'

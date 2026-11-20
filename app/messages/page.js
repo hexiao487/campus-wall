@@ -122,7 +122,7 @@ export default function MessagesPage() {
                 <div className="row-main">
                   <div className="row-title">
                     {c.peer.username}
-                    {c.peer.role === 'admin' && <span className="badge-admin">管理员</span>}
+                    {c.peer.role === 'admin' && c.peer.username !== '管理员' && <span className="badge-admin">管理员</span>}
                   </div>
                   <div className="row-sub">
                     {c.lastFromMe ? '我：' : ''}

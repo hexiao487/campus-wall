@@ -156,7 +156,7 @@ export default function UserProfilePage() {
             <div className="profile-main">
               <div className="profile-name">
                 {u.username}
-                {u.role === 'admin' && <span className="badge-admin">管理员</span>}
+                {u.role === 'admin' && u.username !== '管理员' && <span className="badge-admin">管理员</span>}
               </div>
               <div className="profile-sub">
                 加入于 {new Date(u.created_at).getFullYear()} 年 · {timeAgo(u.created_at)}活跃

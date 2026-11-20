@@ -127,7 +127,7 @@ export default function FriendsPage() {
       <div className="row-main">
         <div className="row-title">
           <Link className="author-link" href={`/u/${u.id}`}>{u.username}</Link>
-          {u.role === 'admin' && <span className="badge-admin">管理员</span>}
+          {u.role === 'admin' && u.username !== '管理员' && <span className="badge-admin">管理员</span>}
         </div>
         <div className="row-sub">{u.followedBy ? '关注了你' : ''}</div>
       </div>

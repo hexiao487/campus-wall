@@ -93,7 +93,7 @@ function SearchInner() {
                 <div className="row-main">
                   <div className="row-title">
                     {u.username}
-                    {u.role === 'admin' && <span className="badge-admin">管理员</span>}
+                    {u.role === 'admin' && u.username !== '管理员' && <span className="badge-admin">管理员</span>}
                   </div>
                   <div className="row-sub">看主页 / 加好友</div>
                 </div>
