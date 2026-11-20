@@ -3175,6 +3175,7 @@ a.user-chip:active {
 }
 .post-video-wrap {
   position: relative;
+  min-height: 180px;
   display: block;
   margin-top: 8px;
   border-radius: 14px;
