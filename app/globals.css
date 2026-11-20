@@ -2963,3 +2963,10 @@ a.user-chip:active {
 .search-fab:active {
   transform: scale(0.9);
 }
+
+.hero-ver {
+  align-self: center;
+  margin-left: 8px;
+  font-size: 11px;
+  vertical-align: middle;
+}
