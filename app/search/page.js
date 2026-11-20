@@ -87,8 +87,8 @@ function SearchInner() {
           <div className="card users-hit">
             {users.map((u) => (
               <Link className="row" href={`/u/${u.id}`} key={u.id}>
-                <span className="avatar" style={{ ...avatarStyle(u.username), width: 36, height: 36, borderRadius: 12 }}>
-                  {initial(u.username)}
+                <span className="avatar" style={{ ...avatarStyle(u.username, u.avatar_url), width: 36, height: 36, borderRadius: 12 }}>
+                  {u.avatar_url ? '' : initial(u.username)}
                 </span>
                 <div className="row-main">
                   <div className="row-title">

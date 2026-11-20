@@ -206,7 +206,7 @@ export default function DmRoomPage() {
     return (
       <div className={`dm-line ${mine ? 'mine' : ''}`} key={m.id}>
         {!mine && (
-          <span className="avatar" style={{ ...avatarStyle(peer?.username || '?'), width: 30, height: 30, borderRadius: 10 }}>
+          <span className="avatar" style={{ ...avatarStyle(peer?.username || '?', peer?.avatar_url), width: 30, height: 30, borderRadius: 10 }}>
             {initial(peer?.username)}
           </span>
         )}

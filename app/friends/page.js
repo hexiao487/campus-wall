@@ -121,8 +121,8 @@ export default function FriendsPage() {
 
   const personRow = (u, right) => (
     <div className="row" key={u.id}>
-      <Link className="avatar avatar-link" href={`/u/${u.id}`} style={{ ...avatarStyle(u.username), width: 38, height: 38, borderRadius: 12 }}>
-        {initial(u.username)}
+      <Link className="avatar avatar-link" href={`/u/${u.id}`} style={{ ...avatarStyle(u.username, u.avatar_url), width: 38, height: 38, borderRadius: 12 }}>
+        {u.avatar_url ? '' : initial(u.username)}
       </Link>
       <div className="row-main">
         <div className="row-title">

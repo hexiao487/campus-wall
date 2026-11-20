@@ -279,7 +279,7 @@ export default function PttPage() {
             {friends.length === 0 && <div className="empty">还没有好友，先去好友页加人</div>}
             {friends.map((f) => (
               <Link className="row" href={`/ptt?with=${f.id}`} key={f.id}>
-                <span className="avatar" style={{ ...avatarStyle(f.username), width: 38, height: 38, borderRadius: 12 }}>
+                <span className="avatar" style={{ ...avatarStyle(f.username, f.avatar_url), width: 38, height: 38, borderRadius: 12 }}>
                   {initial(f.username)}
                 </span>
                 <div className="row-main">
@@ -293,7 +293,7 @@ export default function PttPage() {
         ) : (
           <div className="card ptt-card">
             <div className="ptt-head">
-              <span className="avatar" style={{ ...avatarStyle(peer?.username || '?'), width: 44, height: 44, borderRadius: 14 }}>
+              <span className="avatar" style={{ ...avatarStyle(peer?.username || '?', peer?.avatar_url), width: 44, height: 44, borderRadius: 14 }}>
                 {initial(peer?.username)}
               </span>
               <div>

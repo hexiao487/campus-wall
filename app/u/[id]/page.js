@@ -150,8 +150,8 @@ export default function UserProfilePage() {
 
         <div className="card profile-card">
           <div className="profile-head">
-            <span className="avatar profile-avatar" style={avatarStyle(u.username)}>
-              {initial(u.username)}
+            <span className="avatar profile-avatar" style={avatarStyle(u.username, u.avatar_url)}>
+              {u.avatar_url ? '' : initial(u.username)}
             </span>
             <div className="profile-main">
               <div className="profile-name">

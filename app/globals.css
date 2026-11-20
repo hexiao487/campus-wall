@@ -3137,3 +3137,19 @@ a.user-chip:active {
     flex: 0 0 38px;
   }
 }
+
+.room-title .badge-admin,
+.comment-name .badge-admin,
+.row-title .badge-admin,
+.post-author .badge-admin {
+  margin-left: 6px;
+}
+
+.comment-row .comment-del {
+  border: 0;
+  background: transparent;
+  color: #b03a3a;
+  font-size: 11px;
+  padding: 2px 0 0;
+  cursor: pointer;
+}

@@ -82,7 +82,7 @@ export default function MessagesPage() {
             <div className="section-title">@ 提到我的</div>
             {mentions.slice(0, 12).map((m) => (
               <Link className="row mention-row" href={m.link || '/'} key={m.id}>
-                <span className="avatar" style={{ ...avatarStyle(m.from.username), width: 38, height: 38, borderRadius: 12 }}>
+                <span className="avatar" style={{ ...avatarStyle(m.from.username, m.from.avatar_url), width: 38, height: 38, borderRadius: 12 }}>
                   {initial(m.from.username)}
                 </span>
                 <div className="row-main">
@@ -116,7 +116,7 @@ export default function MessagesPage() {
             )}
             {conversations.map((c) => (
               <Link className="row" href={`/messages/${c.peer.id}`} key={c.peer.id}>
-                <span className="avatar" style={{ ...avatarStyle(c.peer.username), width: 40, height: 40, borderRadius: 13 }}>
+                <span className="avatar" style={{ ...avatarStyle(c.peer.username, c.peer.avatar_url), width: 40, height: 40, borderRadius: 13 }}>
                   {initial(c.peer.username)}
                 </span>
                 <div className="row-main">

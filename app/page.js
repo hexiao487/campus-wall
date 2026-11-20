@@ -15,7 +15,6 @@ export default function HomePage() {
   const [notice, setNotice] = useState('');
   const [savedIds, setSavedIds] = useState([]);
   const [pinned, setPinned] = useState([]);
-  const [tags, setTags] = useState([]);
 
   const loadMe = useCallback(async () => {
     try {
@@ -50,14 +49,9 @@ export default function HomePage() {
       setLoading(false);
 
       try {
-        const [pinRes, tagRes] = await Promise.all([
-          fetch('/api/pinned', { cache: 'no-store' }),
-          fetch('/api/tags', { cache: 'no-store' })
-        ]);
+        const pinRes = await fetch('/api/pinned', { cache: 'no-store' });
         const pin = await pinRes.json();
         setPinned(pin.posts || []);
-        const tg = await tagRes.json();
-        setTags(tg.tags || []);
       } catch {
         /* 忽略 */
       }
@@ -223,7 +217,7 @@ export default function HomePage() {
         <div className="hero">
           <h1>
             校园<span>墙</span>
-            <span className="ver-badge hero-ver">V4.65beta</span>
+            <span className="ver-badge hero-ver">V4.65PRO</span>
           </h1>
           <p>把想说的话贴上来，会有人看见的。</p>
         </div>
@@ -235,7 +229,7 @@ export default function HomePage() {
               <div className="pinned-item" key={p.id}>
                 <span className="pinned-author">{p.author_name}</span>
                 <span className="pinned-text">{p.content?.slice(0, 60) || '（图片公告）'}</span>
-                <a className="pinned-link" href={`#post-${p.id}`}>查看</a>
+                <a className="pinned-link" href={`/p/${p.id}`}>查看</a>
               </div>
             ))}
           </div>

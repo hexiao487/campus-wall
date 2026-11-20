@@ -35,7 +35,7 @@ export default function PostDetailPage() {
         const res = await fetch(`/api/posts/${id}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || '帖子加载失败');
-        setPost(data.post);
+        setPost({ ...data.post, comment_count: (data.comments || []).length });
         setComments(data.comments || []);
         setLiked(Boolean(data.liked));
         setSaved(Boolean(data.saved));
@@ -98,6 +98,21 @@ export default function PostDetailPage() {
       setNotice(e2.message);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function removeComment(c) {
+    if (!window.confirm('删除这条评论？')) return;
+    try {
+      const res = await fetch(`/api/posts/${id}/comments/${c.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || '删除失败');
+      }
+      setComments((prev) => prev.filter((x) => x.id !== c.id));
+      setPost((p) => ({ ...p, comment_count: Math.max(0, (p.comment_count || 1) - 1) }));
+    } catch (e) {
+      setNotice(e.message);
     }
   }
 
@@ -196,6 +211,9 @@ export default function PostDetailPage() {
                   <div className="comment-main">
                     <div className="comment-name">{c.author_name}<span className="comment-time">{timeAgo(c.created_at)}</span></div>
                     <div className="comment-body">{c.content}</div>
+                    {(me?.role === 'admin' || (me?.id && c.author_id === me.id)) && (
+                      <button className="comment-del" onClick={() => removeComment(c)}>删除</button>
+                    )}
                   </div>
                 </div>
               ))}
