@@ -2945,10 +2945,16 @@ a.user-chip:active {
 /* ============ V4.5beta 极简顶部：右上角圆形搜索 ============ */
 
 .header-min {
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   min-height: 44px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .search-fab {
