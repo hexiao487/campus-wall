@@ -15,6 +15,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState('posts');
   const [posts, setPosts] = useState([]);
   const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
   const [notice, setNotice] = useState('');
 
   const loadMe = useCallback(async () => {
@@ -55,12 +56,43 @@ export default function AdminPage() {
     }
   }, []);
 
+  const loadReports = useCallback(async () => {
+    try {
+      const res = await fetch('/api/reports', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setReports(data.reports || []);
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }, []);
+
   useEffect(() => {
     if (me?.role === 'admin') {
       loadPosts();
       loadUsers();
+      loadReports();
     }
-  }, [me, loadPosts, loadUsers]);
+  }, [me, loadPosts, loadUsers, loadReports]);
+
+  async function resolveReport(report, alsoDelete) {
+    try {
+      if (alsoDelete) {
+        await fetch(`/api/posts/${report.postId}`, { method: 'DELETE' });
+        setPosts((prev) => prev.filter((p) => p.id !== report.postId));
+      }
+      const res = await fetch('/api/reports', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: report.id })
+      });
+      if (!res.ok) throw new Error((await res.json()).error || '处理失败');
+      setReports((prev) => prev.map((r) => (r.id === report.id ? { ...r, done: true } : r)));
+      setNotice(alsoDelete ? '已删帖并处理举报' : '已标记处理');
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
 
   async function login(e) {
     e.preventDefault();
@@ -226,7 +258,42 @@ export default function AdminPage() {
           <button className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>
             用户管理
           </button>
+          <button className={tab === 'reports' ? 'active' : ''} onClick={() => setTab('reports')}>
+            举报箱{reports.filter((r) => !r.done).length > 0 ? ` (${reports.filter((r) => !r.done).length})` : ''}
+          </button>
         </div>
+
+        {tab === 'reports' && (
+          <div className="card">
+            {reports.length === 0 ? (
+              <div className="empty">还没有人举报</div>
+            ) : (
+              reports.map((r) => (
+                <div className="row" key={r.id}>
+                  <div className="row-main">
+                    <div className="row-title">
+                      {r.byName} 举报
+                      {r.done && <span className="tag-ok">已处理</span>}
+                    </div>
+                    <div className="row-sub">
+                      理由：{r.reason} · {r.post ? `帖子：${(r.post.content || r.post.author_name || '').slice(0, 40)}` : '帖子已删除'}
+                    </div>
+                  </div>
+                  {!r.done && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-danger btn-mini" onClick={() => resolveReport(r, true)}>
+                        删帖
+                      </button>
+                      <button className="btn btn-ghost btn-mini" onClick={() => resolveReport(r, false)}>
+                        忽略
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {tab === 'posts' ? (
           <div className="card">

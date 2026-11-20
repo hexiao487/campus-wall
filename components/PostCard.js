@@ -1,12 +1,27 @@
 'use client';
 
 import { imgSrc } from '@/lib/img';
+import { parseImages } from '@/lib/images';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
-export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteComment, onCommentAdded }) {
+export default function PostCard({
+  post,
+  liked,
+  me,
+  saved = false,
+  pinned = false,
+  onLike,
+  onDelete,
+  onDeleteComment,
+  onCommentAdded,
+  onToggleSave,
+  onTogglePin,
+  onReport
+}) {
+  const images = parseImages(post.image_url);
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -109,9 +124,19 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteCo
       </div>
 
       {post.content && <p className="post-body">{post.content}</p>}
-      {post.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="post-image" src={imgSrc(post.image_url)} alt="帖子配图" loading="lazy" />
+      {images.length > 0 && (
+        <div className={`post-images grid-${Math.min(images.length, 3)}`}>
+          {images.map((url, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={url + i}
+              className="post-image"
+              src={imgSrc(url)}
+              alt={`帖子配图 ${i + 1}`}
+              loading="lazy"
+            />
+          ))}
+        </div>
       )}
 
       <div className="post-actions">
@@ -128,6 +153,22 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteCo
           <span>💬</span>
           <span>{post.comment_count || 0}</span>
         </button>
+
+        <button className={`act ${saved ? 'saved' : ''}`} onClick={() => onToggleSave?.(post)} aria-label="收藏">
+          <span>{saved ? '★' : '☆'}</span>
+          <span>{saved ? '已收藏' : '收藏'}</span>
+        </button>
+
+        <button className="act" onClick={() => onReport?.(post)} aria-label="举报">
+          <span>⚑</span>
+          <span>举报</span>
+        </button>
+
+        {isAdmin && (
+          <button className={`act ${pinned ? 'pinned' : ''}`} onClick={() => onTogglePin?.(post)}>
+            {pinned ? '取消置顶' : '置顶'}
+          </button>
+        )}
 
         {canDeletePost && (
           <button className="act act-danger" onClick={() => onDelete(post)}>

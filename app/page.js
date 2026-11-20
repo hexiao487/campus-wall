@@ -13,14 +13,20 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [notice, setNotice] = useState('');
+  const [savedIds, setSavedIds] = useState([]);
+  const [pinned, setPinned] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [checkin, setCheckin] = useState(null);
 
   const loadMe = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' });
       const data = await res.json();
       setMe(data.user || null);
+      return data.user || null;
     } catch {
       setMe(null);
+      return null;
     }
   }, []);
 
@@ -40,9 +46,34 @@ export default function HomePage() {
 
   useEffect(() => {
     (async () => {
-      await loadMe();
+      const user = await loadMe();
       await loadPosts(null);
       setLoading(false);
+
+      try {
+        const [pinRes, tagRes] = await Promise.all([
+          fetch('/api/pinned', { cache: 'no-store' }),
+          fetch('/api/tags', { cache: 'no-store' })
+        ]);
+        const pin = await pinRes.json();
+        setPinned(pin.posts || []);
+        const tg = await tagRes.json();
+        setTags(tg.tags || []);
+      } catch {
+        /* 忽略 */
+      }
+
+      try {
+        const sv = await fetch('/api/saved', { cache: 'no-store' });
+        if (sv.ok) {
+          const d = await sv.json();
+          setSavedIds(d.ids || []);
+        }
+        const ck = await fetch('/api/checkin', { cache: 'no-store' });
+        if (ck.ok) setCheckin(await ck.json());
+      } catch {
+        /* 忽略 */
+      }
     })();
   }, [loadMe, loadPosts]);
 
@@ -121,6 +152,81 @@ export default function HomePage() {
     );
   }
 
+  async function toggleSave(post) {
+    if (!me) {
+      window.location.href = '/login';
+      return;
+    }
+    try {
+      const res = await fetch('/api/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '收藏失败');
+      setSavedIds(data.ids || []);
+      setNotice(data.saved ? '已加入收藏，去「我的收藏」看看' : '已取消收藏');
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+
+  async function reportPost(post) {
+    if (!me) {
+      window.location.href = '/login';
+      return;
+    }
+    const reason = window.prompt('举报这条帖子的理由（可留空，直接确定即可）', '');
+    if (reason === null) return;
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, reason })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '举报失败');
+      setNotice('已提交举报，管理员会尽快处理');
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+
+  async function togglePin(post) {
+    try {
+      const res = await fetch('/api/pinned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '置顶失败');
+      const pin = await fetch('/api/pinned', { cache: 'no-store' });
+      const pd = await pin.json();
+      setPinned(pd.posts || []);
+      setNotice(data.pinned ? '已置顶为公告' : '已取消置顶');
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+
+  async function doCheckin() {
+    if (!me) {
+      window.location.href = '/login';
+      return;
+    }
+    try {
+      const res = await fetch('/api/checkin', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '签到失败');
+      setCheckin((prev) => ({ ...(prev || {}), signed: true, streak: data.streak, days: data.days }));
+      setNotice(data.already ? `今天已经签过啦，连续 ${data.streak} 天` : `签到成功，连续 ${data.streak} 天 🔥`);
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+
   async function loadMore() {
     if (!cursor || loadingMore) return;
     setLoadingMore(true);
@@ -139,6 +245,39 @@ export default function HomePage() {
           </h1>
           <p>把想说的话贴上来，会有人看见的。</p>
         </div>
+
+        <div className="entry-row">
+          <Link className="entry" href="/hot">🔥 热榜</Link>
+          <Link className="entry" href="/search">🔍 搜索</Link>
+          <Link className="entry" href="/saved">⭐ 我的收藏</Link>
+          <button className="entry" onClick={doCheckin}>
+            {checkin?.signed ? `✅ 已签到 · 连续 ${checkin.streak} 天` : '📅 今日签到'}
+          </button>
+        </div>
+
+        {tags.length > 0 && (
+          <div className="tag-strip">
+            {tags.map((t) => (
+              <Link key={t.tag} className="tag-item" href={`/t/${encodeURIComponent(t.tag)}`}>
+                #{t.tag}
+                <span className="tag-count">{t.count}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {pinned.length > 0 && (
+          <div className="pinned-box">
+            <div className="pinned-title">📌 置顶公告</div>
+            {pinned.map((p) => (
+              <div className="pinned-item" key={p.id}>
+                <span className="pinned-author">{p.author_name}</span>
+                <span className="pinned-text">{p.content?.slice(0, 60) || '（图片公告）'}</span>
+                <a className="pinned-link" href={`#post-${p.id}`}>查看</a>
+              </div>
+            ))}
+          </div>
+        )}
 
         {notice && (
           <div className="alert" onClick={() => setNotice('')} style={{ cursor: 'pointer' }}>
@@ -166,11 +305,16 @@ export default function HomePage() {
               key={post.id}
               post={post}
               liked={liked.includes(post.id)}
+              saved={savedIds.includes(post.id)}
+              pinned={pinned.some((p) => p.id === post.id)}
               me={me}
               onLike={handleLike}
               onDelete={handleDelete}
               onDeleteComment={handleCommentDeleted}
               onCommentAdded={handleCommentAdded}
+              onToggleSave={toggleSave}
+              onReport={reportPost}
+              onTogglePin={togglePin}
             />
           ))
         )}

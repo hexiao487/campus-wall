@@ -4,10 +4,11 @@ import { imgSrc } from '@/lib/img';
 
 import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '@/lib/imageCompress';
+import { joinImages } from '@/lib/images';
 
 export default function Composer({ me, onPublished }) {
   const [content, setContent] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageList, setImageList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
@@ -68,23 +69,26 @@ export default function Composer({ me, onPublished }) {
   }
 
   async function pickImage(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []).slice(0, Math.max(0, 4 - imageList.length));
+    if (!files.length) return;
     setErr('');
-    if (file.size > 24 * 1024 * 1024) {
-      setErr('图片太大了（超过 24MB），换一张吧');
-      e.target.value = '';
-      return;
-    }
     setUploading(true);
     try {
-      const prepared = await compressImage(file);
-      const fd = new FormData();
-      fd.append('file', prepared);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '上传失败');
-      setImageUrl(data.url);
+      const uploaded = [];
+      for (const file of files) {
+        if (file.size > 24 * 1024 * 1024) {
+          setErr('有图片超过 24MB，已跳过');
+          continue;
+        }
+        const prepared = await compressImage(file);
+        const fd = new FormData();
+        fd.append('file', prepared);
+        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '上传失败');
+        uploaded.push(data.url);
+      }
+      setImageList((prev) => [...prev, ...uploaded].slice(0, 4));
     } catch (e2) {
       setErr(e2.message);
     } finally {
@@ -95,7 +99,7 @@ export default function Composer({ me, onPublished }) {
 
   async function publish() {
     if (sending || uploading) return;
-    if (!content.trim() && !imageUrl) {
+    if (!content.trim() && imageList.length === 0) {
       setErr('说点什么再发吧');
       return;
     }
@@ -106,12 +110,12 @@ export default function Composer({ me, onPublished }) {
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content.trim(), imageUrl: imageUrl || null, mentions: active })
+        body: JSON.stringify({ content: content.trim(), imageUrl: joinImages(imageList), mentions: active })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '发布失败');
       setContent('');
-      setImageUrl('');
+      setImageList([]);
       setMentionIds([]);
       onPublished?.(data.post);
     } catch (e3) {
@@ -185,21 +189,29 @@ export default function Composer({ me, onPublished }) {
         </div>
       )}
 
-      {imageUrl && (
-        <div className="composer-image">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imgSrc(imageUrl)} alt="配图预览" />
-          <button type="button" className="composer-image-remove" onClick={() => setImageUrl('')}>
-            移除
-          </button>
+      {imageList.length > 0 && (
+        <div className="composer-images">
+          {imageList.map((url, i) => (
+            <div className="composer-image" key={url + i}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imgSrc(url)} alt={`配图 ${i + 1}`} />
+              <button
+                type="button"
+                className="composer-image-remove"
+                onClick={() => setImageList((prev) => prev.filter((x) => x !== url))}
+              >
+                移除
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
       <div className="composer-bar">
         <button type="button" className="btn btn-ghost btn-mini" onClick={() => fileRef.current?.click()} disabled={uploading || muted}>
-          {uploading ? '上传中…' : '📷 配图'}
+          {uploading ? '上传中…' : `📷 配图 ${imageList.length}/4`}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} hidden />
+        <input ref={fileRef} type="file" accept="image/*" multiple onChange={pickImage} hidden />
         <span className="composer-count">
           {content.length}/{max}
         </span>
