@@ -9,6 +9,7 @@ export default function ComposePage() {
   const router = useRouter();
   const [me, setMe] = useState(null);
   const [ready, setReady] = useState(false);
+  const [inviteText, setInviteText] = useState('');
 
   const loadMe = useCallback(async () => {
     try {
@@ -24,6 +25,13 @@ export default function ComposePage() {
 
   useEffect(() => {
     loadMe();
+    try {
+      if (new URLSearchParams(window.location.search).get('invite')) {
+        setInviteText('想认识新朋友，来校园墙聊两句吧～ #校园墙');
+      }
+    } catch {
+      /* 忽略 */
+    }
   }, [loadMe]);
 
   async function handleLogout() {
@@ -44,6 +52,7 @@ export default function ComposePage() {
         {ready ? (
           <Composer
             me={me}
+            initialText={inviteText}
             onPublished={(post) => {
               router.push('/');
               router.refresh?.();

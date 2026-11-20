@@ -1423,9 +1423,13 @@ textarea {
 .dm-composer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
   margin-top: 14px;
-  padding: 10px;
+  padding: 8px 10px;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   background: var(--glass-hi);
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -1433,7 +1437,9 @@ textarea {
 }
 
 .dm-input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   height: 38px;
   border: none;
   background: transparent;
@@ -1798,7 +1804,7 @@ textarea {
   max-width: 520px;
   padding: 8px 10px 11px;
   border-radius: 26px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(18px) saturate(180%);
@@ -2969,4 +2975,92 @@ a.user-chip:active {
   margin-left: 8px;
   font-size: 11px;
   vertical-align: middle;
+}
+
+/* ============ V4.61beta 群聊加号 / 添加好友页 ============ */
+
+.plus-fab {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 70;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: #111;
+  text-decoration: none;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.plus-fab:active {
+  transform: scale(0.9);
+}
+
+.add-friend-shell {
+  padding-top: 8px;
+}
+
+.add-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.add-back,
+.add-invite {
+  width: auto;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+}
+
+.add-invite {
+  margin-left: auto;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.user-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.user-row-main b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #111;
+}
+
+.user-row-main span {
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+.user-row-btn {
+  width: auto;
+  padding: 9px 14px;
+  font-size: 13px;
+  border-radius: 999px;
 }

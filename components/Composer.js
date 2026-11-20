@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '@/lib/imageCompress';
 import { joinImages } from '@/lib/images';
 
-export default function Composer({ me, onPublished }) {
-  const [content, setContent] = useState('');
+export default function Composer({
+  initialText = '', me, onPublished }) {
+  const [content, setContent] = useState(initialText || '');
   const [imageList, setImageList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);

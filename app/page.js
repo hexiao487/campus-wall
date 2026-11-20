@@ -223,7 +223,7 @@ export default function HomePage() {
         <div className="hero">
           <h1>
             校园<span>墙</span>
-            <span className="ver-badge hero-ver">V4.51beta</span>
+            <span className="ver-badge hero-ver">V4.61beta</span>
           </h1>
           <p>把想说的话贴上来，会有人看见的。</p>
         </div>
