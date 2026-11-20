@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '@/lib/imageCompress';
 
 export default function Composer({ me, onPublished }) {
@@ -10,6 +10,15 @@ export default function Composer({ me, onPublished }) {
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
   const fileRef = useRef(null);
+  const textRef = useRef(null);
+
+  // 从右上角「发帖」进来时，直接聚焦输入框
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!new URLSearchParams(window.location.search).has('compose')) return;
+    textRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => textRef.current?.focus(), 200);
+  }, []);
 
   const max = 1000;
   const muted = me?.role === 'user' && me?.isMuted;
@@ -89,6 +98,7 @@ export default function Composer({ me, onPublished }) {
       {err && <div className="alert">{err}</div>}
 
       <textarea
+        ref={textRef}
         value={content}
         maxLength={max}
         onChange={(e) => setContent(e.target.value)}

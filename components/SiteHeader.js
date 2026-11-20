@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { initial, avatarStyle } from '@/lib/format';
+import PostFab from '@/components/PostFab';
 
 export default function SiteHeader({ me, onLogout }) {
   return (
@@ -50,6 +51,7 @@ export default function SiteHeader({ me, onLogout }) {
           )}
         </div>
       </div>
+      <PostFab me={me} />
     </header>
   );
 }
