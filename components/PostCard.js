@@ -2,7 +2,7 @@
 
 import { imgSrc } from '@/lib/img';
 import { parseImages } from '@/lib/images';
-import { isVideo, mediaSrc, videoMime } from '@/lib/media';
+import { isVideo, mediaSrc, posterSrc, videoMime } from '@/lib/media';
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
@@ -38,6 +38,7 @@ function FeedVideo({ url, href }) {
         loop
         playsInline
         preload="metadata"
+        poster={posterSrc(url) || undefined}
       >
         <source src={mediaSrc(url)} type={videoMime(mediaSrc(url))} />
       </video>

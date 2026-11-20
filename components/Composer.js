@@ -107,6 +107,65 @@ export default function Composer({
     }
   }
 
+  /** 从视频里抽第一帧当封面，手机端没播放时也能看到画面 */
+  async function grabPoster(file) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (v) => {
+        if (done) return;
+        done = true;
+        resolve(v);
+      };
+      const objUrl = URL.createObjectURL(file);
+      const el = document.createElement('video');
+      el.preload = 'auto';
+      el.muted = true;
+      el.playsInline = true;
+      el.src = objUrl;
+      el.onloadeddata = () => {
+        try {
+          el.currentTime = Math.min(0.2, (el.duration || 1) / 5);
+        } catch {
+          /* 忽略 */
+        }
+      };
+      el.onseeked = () => {
+        try {
+          const w = Math.min(720, el.videoWidth || 720);
+          const h = Math.round(((el.videoHeight || 720) * w) / (el.videoWidth || 720));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(el, 0, 0, w, h);
+          canvas.toBlob(async (blob) => {
+            URL.revokeObjectURL(objUrl);
+            if (!blob) return finish(null);
+            try {
+              const fd = new FormData();
+              fd.append('file', new File([blob], 'poster.jpg', { type: 'image/jpeg' }));
+              const res = await fetch('/api/upload', { method: 'POST', body: fd });
+              const data = await res.json();
+              finish(res.ok ? data.url : null);
+            } catch {
+              finish(null);
+            }
+          }, 'image/jpeg', 0.82);
+        } catch {
+          URL.revokeObjectURL(objUrl);
+          finish(null);
+        }
+      };
+      el.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        finish(null);
+      };
+      setTimeout(() => {
+        URL.revokeObjectURL(objUrl);
+        finish(null);
+      }, 8000);
+    });
+  }
+
   async function pickVideo(e) {
     const file = (e.target.files || [])[0];
     e.target.value = '';
@@ -141,7 +200,13 @@ export default function Composer({
         xhr.send(file);
       });
 
-      setVideo({ url: sign.url, type: file.type, name: file.name });
+      let poster = null;
+      try {
+        poster = await grabPoster(file);
+      } catch {
+        poster = null;
+      }
+      setVideo({ url: sign.url, poster, type: file.type, name: file.name });
     } catch (e2) {
       setErr(e2.message);
     } finally {
@@ -165,7 +230,7 @@ export default function Composer({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: content.trim(),
-          imageUrl: video ? toVideoTag(video.url) : joinImages(imageList),
+          imageUrl: video ? toVideoTag(video.url, video.poster) : joinImages(imageList),
           mentions: active
         })
       });
@@ -267,7 +332,7 @@ export default function Composer({
 
       {video && (
         <div className="composer-video">
-          <video src={mediaSrc(video.url)} controls playsInline preload="metadata" />
+          <video src={mediaSrc(video.url)} controls playsInline preload="metadata" poster={video.poster ? mediaSrc(video.poster) : undefined} />
           <button type="button" className="composer-image-remove" onClick={() => setVideo(null)}>
             移除
           </button>

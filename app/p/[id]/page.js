@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import SiteHeader from '@/components/SiteHeader';
 import { imgSrc } from '@/lib/img';
 import { parseImages } from '@/lib/images';
-import { isVideo, mediaSrc, videoMime } from '@/lib/media';
+import { isVideo, mediaSrc, posterSrc, videoMime } from '@/lib/media';
 import { timeAgo, initial, avatarStyle } from '@/lib/format';
 
 export default function PostDetailPage() {
@@ -181,6 +181,7 @@ export default function PostDetailPage() {
                   muted
                   playsInline
                   preload="metadata"
+                  poster={posterSrc(video) || undefined}
                 >
                   <source src={mediaSrc(video)} type={videoMime(mediaSrc(video))} />
                 </video>
