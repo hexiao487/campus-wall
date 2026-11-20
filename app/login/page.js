@@ -123,7 +123,7 @@ export default function LoginPage() {
         <Link className="brand" href="/">
           <span className="brand-logo">墙</span>
           校园墙
-          <span className="ver-badge">V5.11beta</span>
+          <span className="ver-badge">V5.21beta</span>
         </Link>
       </div>
 

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '@/lib/imageCompress';
 import { joinImages } from '@/lib/images';
 import { toVideoTag, mediaSrc } from '@/lib/media';
+import { compressVideo, VIDEO_MAX_BYTES } from '@/lib/videoCompress';
 
 export default function Composer({
   initialText = '', me, onPublished }) {
@@ -14,6 +15,7 @@ export default function Composer({
   const [video, setVideo] = useState(null);
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [compressing, setCompressing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
@@ -171,18 +173,29 @@ export default function Composer({
     e.target.value = '';
     if (!file) return;
     setErr('');
-    if (file.size > 50 * 1024 * 1024) {
-      setErr('视频不能超过 50MB，先用相册/剪辑 App 压一下再传');
-      return;
-    }
     if (imageList.length) setImageList([]);
+
+    let sendFile = file;
     setVideoUploading(true);
     setVideoProgress(0);
     try {
+      // 超过 50MB 先在手机里压一遍，再直传
+      if (file.size > VIDEO_MAX_BYTES) {
+        setCompressing(true);
+        try {
+          sendFile = await compressVideo(file, {
+            onProgress: (p) => setVideoProgress(p)
+          });
+        } finally {
+          setCompressing(false);
+        }
+        setVideoProgress(0);
+      }
+
       const signRes = await fetch('/api/upload/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: file.type || 'video/mp4', size: file.size })
+        body: JSON.stringify({ type: sendFile.type || 'video/mp4', size: sendFile.size })
       });
       const sign = await signRes.json();
       if (!signRes.ok) throw new Error(sign.error || '申请上传失败');
@@ -190,27 +203,28 @@ export default function Composer({
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', sign.signedUrl);
-        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+        xhr.setRequestHeader('Content-Type', sendFile.type || 'video/mp4');
         xhr.setRequestHeader('x-upsert', 'true');
         xhr.upload.onprogress = (ev) => {
           if (ev.lengthComputable) setVideoProgress(Math.round((ev.loaded / ev.total) * 100));
         };
         xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('上传失败，请重试')));
         xhr.onerror = () => reject(new Error('上传失败，请检查网络'));
-        xhr.send(file);
+        xhr.send(sendFile);
       });
 
       let poster = null;
       try {
-        poster = await grabPoster(file);
+        poster = await grabPoster(sendFile);
       } catch {
         poster = null;
       }
-      setVideo({ url: sign.url, poster, type: file.type, name: file.name });
+      setVideo({ url: sign.url, poster, type: sendFile.type, name: sendFile.name });
     } catch (e2) {
       setErr(e2.message);
     } finally {
       setVideoUploading(false);
+      setCompressing(false);
       setVideoProgress(0);
     }
   }
@@ -338,7 +352,11 @@ export default function Composer({
           </button>
         </div>
       )}
-      {videoUploading && <div className="composer-video-bar">视频上传中… {videoProgress}%</div>}
+      {videoUploading && (
+        <div className="composer-video-bar">
+          {compressing ? '视频大于 50MB，正在压缩' : '视频上传中'}… {videoProgress}%
+        </div>
+      )}
 
       <div className="composer-bar">
         <button type="button" className="btn btn-ghost btn-mini" onClick={() => fileRef.current?.click()} disabled={uploading || muted}>
@@ -350,7 +368,7 @@ export default function Composer({
           onClick={() => videoRef.current?.click()}
           disabled={videoUploading || muted}
         >
-          {videoUploading ? '上传中…' : '🎬 视频'}
+          {videoUploading ? (compressing ? '压缩中…' : '上传中…') : '🎬 视频'}
         </button>
         <input ref={fileRef} type="file" accept="image/*" multiple onChange={pickImage} hidden />
         <input ref={videoRef} type="file" accept="video/mp4,video/quicktime,video/webm,video/*" onChange={pickVideo} hidden />
