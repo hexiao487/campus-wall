@@ -2985,11 +2985,10 @@ a.user-chip:active {
 
 /* ============ V4.61beta 群聊加号 / 添加好友页 ============ */
 
-.plus-fab {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 70;
+.plus-inline {
+  display: inline-grid;
+  place-items: center;
+  margin: 6px 0 2px;
   width: 42px;
   height: 42px;
   display: grid;
@@ -3005,7 +3004,7 @@ a.user-chip:active {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.plus-fab:active {
+.plus-inline:active {
   transform: scale(0.9);
 }
 

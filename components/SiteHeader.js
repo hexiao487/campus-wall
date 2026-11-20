@@ -14,9 +14,7 @@ export default function SiteHeader({ me, onLogout }) {
               登录 / 注册
             </Link>
           )}
-          <div className="header-left">
-            <AccountMenu me={me} onLogout={onLogout} />
-          </div>
+          <AccountMenu me={me} onLogout={onLogout} />
           <div className="header-right">
             <Link className="search-fab" href="/search" aria-label="搜索">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
