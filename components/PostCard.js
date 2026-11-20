@@ -82,7 +82,7 @@ export default function PostCard({ post, liked, me, onLike, onDelete, onDeleteCo
   }
 
   return (
-    <article className="card post">
+    <article className="card post" id={`post-${post.id}`}>
       <div className="post-head">
         {post.author_id ? (
           <Link className="avatar avatar-link" href={`/u/${post.author_id}`} style={avatarStyle(post.author_name)} title="看主页">

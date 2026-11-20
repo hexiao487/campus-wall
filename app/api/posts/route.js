@@ -100,7 +100,26 @@ export async function POST(request) {
 
     if (error) throw new Error(error.message);
 
-    return NextResponse.json({ post: { ...created, liked: false } });
+    // @ 提醒：写进消息表（kind=mention），被提到的人在消息页面能看到
+    const mentionIds = Array.isArray(body.mentions) ? body.mentions : [];
+    const targets = mentionIds
+      .map((m) => (typeof m === 'string' ? m : m?.id))
+      .filter((id) => id && id !== user.id)
+      .slice(0, 10);
+    if (targets.length) {
+      const snippet = (content || '[图片]').slice(0, 120);
+      await supabase.from('dm_messages').insert(
+        targets.map((tid) => ({
+          sender_id: user.id || null,
+          receiver_id: tid,
+          kind: 'mention',
+          content: snippet,
+          image_url: `/#post-${created.id}`
+        }))
+      );
+    }
+
+    return NextResponse.json({ post: { ...created, liked: false }, mentions: targets.length });
   } catch (e) {
     return NextResponse.json({ error: '发布失败：' + e.message }, { status: 500 });
   }

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import SiteHeader from '@/components/SiteHeader';
-import Composer from '@/components/Composer';
 import PostCard from '@/components/PostCard';
 
 export default function HomePage() {
@@ -146,8 +145,6 @@ export default function HomePage() {
             {notice}（点击关闭）
           </div>
         )}
-
-        <Composer me={me} onPublished={handlePublished} />
 
         {me?.role === 'admin' && (
           <div className="notice">

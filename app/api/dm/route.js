@@ -22,6 +22,7 @@ export async function GET(request) {
         .from('dm_messages')
         .select('id, sender_id, receiver_id, kind, content, image_url, audio_url, audio_seconds, read_at, created_at')
         .or(`sender_id.eq.${me.id},receiver_id.eq.${me.id}`)
+        .neq('kind', 'mention')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw new Error(error.message);

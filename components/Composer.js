@@ -9,19 +9,61 @@ export default function Composer({ me, onPublished }) {
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
+  const [mentionAnchor, setMentionAnchor] = useState(-1);
+  const [suggestions, setSuggestions] = useState([]);
+  const [mentionIds, setMentionIds] = useState([]);
   const fileRef = useRef(null);
   const textRef = useRef(null);
-
-  // 从右上角「发帖」进来时，直接聚焦输入框
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!new URLSearchParams(window.location.search).has('compose')) return;
-    textRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => textRef.current?.focus(), 200);
-  }, []);
+  const timerRef = useRef(null);
 
   const max = 1000;
   const muted = me?.role === 'user' && me?.isMuted;
+
+  useEffect(() => {
+    textRef.current?.focus();
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  function handleChange(e) {
+    const value = e.target.value;
+    setContent(value);
+
+    const caret = e.target.selectionStart || 0;
+    const before = value.slice(0, caret);
+    const at = before.lastIndexOf('@');
+    if (at >= 0) {
+      const frag = before.slice(at + 1);
+      if (!/\s/.test(frag) && !frag.includes('@')) {
+        setMentionAnchor(at);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(async () => {
+          try {
+            const res = await fetch(`/api/users/search?q=${encodeURIComponent(frag)}`, { cache: 'no-store' });
+            const data = await res.json();
+            setSuggestions((data.users || []).filter((u) => u.id !== me?.id).slice(0, 5));
+          } catch {
+            setSuggestions([]);
+          }
+        }, 220);
+        return;
+      }
+    }
+    setMentionAnchor(-1);
+    setSuggestions([]);
+  }
+
+  function pickMention(user) {
+    if (mentionAnchor < 0) return;
+    const before = content.slice(0, mentionAnchor);
+    const after = content.slice(mentionAnchor).replace(/^@[^\s@]*/, '');
+    setContent(`${before}@${user.username} ${after}`.slice(0, max));
+    setMentionIds((prev) => (prev.some((m) => m.id === user.id) ? prev : [...prev, { id: user.id, username: user.username }]));
+    setMentionAnchor(-1);
+    setSuggestions([]);
+    setTimeout(() => textRef.current?.focus(), 30);
+  }
 
   async function pickImage(e) {
     const file = e.target.files?.[0];
@@ -58,15 +100,17 @@ export default function Composer({ me, onPublished }) {
     setSending(true);
     setErr('');
     try {
+      const active = mentionIds.filter((m) => content.includes(`@${m.username}`));
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content.trim(), imageUrl: imageUrl || null })
+        body: JSON.stringify({ content: content.trim(), imageUrl: imageUrl || null, mentions: active })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '发布失败');
       setContent('');
       setImageUrl('');
+      setMentionIds([]);
       onPublished?.(data.post);
     } catch (e3) {
       setErr(e3.message);
@@ -92,63 +136,72 @@ export default function Composer({ me, onPublished }) {
 
   return (
     <div className="card composer">
-      {muted && (
-        <div className="alert">你已被管理员禁言，暂时不能发帖和评论。</div>
-      )}
+      {muted && <div className="alert">你已被管理员禁言，暂时不能发帖和评论。</div>}
       {err && <div className="alert">{err}</div>}
 
-      <textarea
-        ref={textRef}
-        value={content}
-        maxLength={max}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder={muted ? '账号已被禁言' : '今天有什么想说的？匿名也可以哦～'}
-        disabled={muted}
-      />
+      <div className="composer-field">
+        <textarea
+          ref={textRef}
+          value={content}
+          maxLength={max}
+          onChange={handleChange}
+          placeholder={muted ? '账号已被禁言' : '今天有什么想说的？用 @ 可以提醒某个同学'}
+          disabled={muted}
+        />
+
+        {suggestions.length > 0 && mentionAnchor >= 0 && (
+          <div className="mention-pop">
+            {suggestions.map((u) => (
+              <button key={u.id} type="button" className="mention-item" onClick={() => pickMention(u)}>
+                <span className="mention-avatar">{u.username.slice(0, 1)}</span>
+                {u.username}
+                {u.role === 'admin' && <span className="badge-admin">管理员</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {mentionIds.length > 0 && (
+        <div className="mention-chips">
+          <span className="mention-chips-label">将提醒</span>
+          {mentionIds.map((m) => (
+            <span key={m.id} className="mention-chip">
+              @{m.username}
+              <button
+                type="button"
+                onClick={() => {
+                  setMentionIds((prev) => prev.filter((x) => x.id !== m.id));
+                  setContent((prev) => prev.split(`@${m.username}`).join(''));
+                }}
+                aria-label="移除"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {imageUrl && (
-        <div style={{ position: 'relative', marginTop: 10 }}>
+        <div className="composer-image">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt="预览"
-            style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 12 }}
-          />
-          <button
-            className="btn btn-ghost btn-mini"
-            style={{ position: 'absolute', top: 8, right: 8 }}
-            onClick={() => setImageUrl('')}
-          >
+          <img src={imageUrl} alt="配图预览" />
+          <button type="button" className="composer-image-remove" onClick={() => setImageUrl('')}>
             移除
           </button>
         </div>
       )}
 
       <div className="composer-bar">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          onChange={pickImage}
-          style={{ display: 'none' }}
-        />
-        <button
-          className="btn btn-ghost btn-mini"
-          onClick={() => fileRef.current?.click()}
-          disabled={muted || uploading}
-        >
+        <button type="button" className="btn btn-ghost btn-mini" onClick={() => fileRef.current?.click()} disabled={uploading || muted}>
           {uploading ? '上传中…' : '📷 配图'}
         </button>
-
-        <span className={`char-count ${content.length > max - 50 ? 'warn' : ''}`}>
+        <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} hidden />
+        <span className="composer-count">
           {content.length}/{max}
         </span>
-
-        <button
-          className="btn btn-primary"
-          onClick={publish}
-          disabled={muted || sending || uploading || (!content.trim() && !imageUrl)}
-        >
+        <button className="btn btn-primary" onClick={publish} disabled={sending || uploading || muted}>
           {sending ? '发布中…' : '发布'}
         </button>
       </div>

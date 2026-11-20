@@ -9,6 +9,7 @@ export default function MessagesPage() {
   const [me, setMe] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mentions, setMentions] = useState([]);
   const [err, setErr] = useState('');
 
   const loadMe = useCallback(async () => {
@@ -25,10 +26,19 @@ export default function MessagesPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/dm', { cache: 'no-store' });
+      const [res, mRes] = await Promise.all([
+        fetch('/api/dm', { cache: 'no-store' }),
+        fetch('/api/mentions', { cache: 'no-store' })
+      ]);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '加载失败');
       setConversations(data.conversations || []);
+      const mData = await mRes.json().catch(() => ({}));
+      setMentions(mData.mentions || []);
+      if (mData.unread > 0) {
+        // 看过即标记为已读，底部导航的红点随之消失
+        fetch('/api/mentions', { method: 'POST' }).catch(() => {});
+      }
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -66,6 +76,28 @@ export default function MessagesPage() {
         </div>
 
         {err && <div className="alert">{err}</div>}
+
+        {me && mentions.length > 0 && (
+          <div className="card mention-inbox">
+            <div className="section-title">@ 提到我的</div>
+            {mentions.slice(0, 12).map((m) => (
+              <Link className="row mention-row" href={m.link || '/'} key={m.id}>
+                <span className="avatar" style={{ ...avatarStyle(m.from.username), width: 38, height: 38, borderRadius: 12 }}>
+                  {initial(m.from.username)}
+                </span>
+                <div className="row-main">
+                  <div className="row-title">
+                    {m.from.username}
+                    <span className="mention-tag">在帖子里 @ 了你</span>
+                    {!m.read && <i className="dot-unread" />}
+                  </div>
+                  <div className="row-sub">{m.snippet}</div>
+                </div>
+                <div className="post-time">{timeAgo(m.createdAt)}</div>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {!me && !loading && (
           <div className="card">
