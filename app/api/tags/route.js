@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { extractTags } from '@/lib/tags';
 
+export const dynamic = 'force-dynamic';
+
 /** 热门话题：按最近 300 条帖子统计出现次数 */
 export async function GET() {
   try {

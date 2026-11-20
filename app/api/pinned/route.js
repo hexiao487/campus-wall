@@ -3,6 +3,8 @@ import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
 import { readJson, writeJson } from '@/lib/store';
 
+export const dynamic = 'force-dynamic';
+
 const KEY = 'pinned_posts';
 
 /** 公告置顶：GET 返回置顶帖；POST（管理员）{ postId } 切换置顶 */
