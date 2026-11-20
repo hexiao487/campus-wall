@@ -5,7 +5,6 @@ import Link from 'next/link';
 import SiteHeader from '@/components/SiteHeader';
 import Feed from '@/components/Feed';
 import { initial, avatarStyle } from '@/lib/format';
-import { compressImage } from '@/lib/imageCompress';
 
 const TABS = [
   { key: 'mine', label: '我的帖子' },
@@ -21,12 +20,6 @@ export default function MePage() {
   const [loading, setLoading] = useState(true);
   const [savedIds, setSavedIds] = useState([]);
   const [likedIds, setLikedIds] = useState([]);
-  const [menu, setMenu] = useState(false);
-  const [mode, setMode] = useState(null); // name | avatar | delete | null
-  const [nameInput, setNameInput] = useState('');
-  const [pwdInput, setPwdInput] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -98,86 +91,6 @@ export default function MePage() {
     setCache({ mine: null, saved: null, liked: null });
   }
 
-  async function saveName(e) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setMsg('');
-    try {
-      const res = await fetch('/api/auth/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: nameInput.trim() })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '修改失败');
-      setMe((m) => ({ ...m, username: data.user.username }));
-      setMsg('昵称已更新');
-      setMode(null);
-    } catch (err) {
-      setMsg(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function uploadAvatar(e) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file || busy) return;
-    setBusy(true);
-    setMsg('');
-    try {
-      const prepared = await compressImage(file, { maxSide: 512 });
-      const fd = new FormData();
-      fd.append('file', prepared);
-      const up = await fetch('/api/upload', { method: 'POST', body: fd });
-      const upd = await up.json();
-      if (!up.ok) throw new Error(upd.error || '上传失败');
-      const res = await fetch('/api/auth/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar_url: upd.url })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '换头像失败');
-      setMe((m) => ({ ...m, avatar_url: data.user.avatar_url }));
-      setMsg('头像已更新');
-    } catch (err) {
-      setMsg(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function deleteAccount(e) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setMsg('');
-    try {
-      const res = await fetch('/api/auth/account', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pwdInput })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '注销失败');
-      window.location.href = '/';
-    } catch (err) {
-      setMsg(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function switchAccount() {
-    setMenu(false);
-    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-      window.location.href = '/login';
-    });
-  }
-
   const posts = cache[tab] || [];
 
   return (
@@ -195,14 +108,6 @@ export default function MePage() {
 
         {me && (
           <>
-            <div className="me-menu-row">
-              <button className="me-menu-btn" onClick={() => setMenu((v) => !v)} aria-label="菜单">
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-
             <div className="me-card">
               <Link className="me-avatar" href={`/u/${me.id}`} style={avatarStyle(me.username, me.avatar_url)}>
                 {!me.avatar_url && initial(me.username)}
@@ -212,7 +117,7 @@ export default function MePage() {
                   {me.username}
                   {me.role === 'admin' && <span className="badge-admin">管理员</span>}
                 </h1>
-                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V4.61beta</span></p>
+                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V4.62beta</span></p>
                 <div className="me-stats">
                   <span><b>{cache.mine ? cache.mine.length : '—'}</b> 帖子</span>
                   <span><b>{cache.saved ? cache.saved.length : '—'}</b> 收藏</span>
@@ -266,52 +171,6 @@ export default function MePage() {
               />
             )}
           </>
-        )}
-
-        {menu && (
-          <div className="sheet-mask" onClick={() => { setMenu(false); setMode(null); setMsg(''); }}>
-            <div className="sheet" onClick={(e) => e.stopPropagation()}>
-              <div className="sheet-bar" />
-              <div className="sheet-title">菜单</div>
-
-              {msg && <div className="sheet-msg">{msg}</div>}
-
-              {!mode && (
-                <>
-                  <button className="glass-btn sheet-item" onClick={() => { setMode('name'); setNameInput(me?.username || ''); }}>
-                    改昵称
-                  </button>
-                  <label className="glass-btn sheet-item">
-                    换头像
-                    <input type="file" accept="image/*" hidden onChange={uploadAvatar} />
-                  </label>
-                  <button className="glass-btn sheet-item" onClick={async () => { setMenu(false); await logout(); }}>
-                    退出登录
-                  </button>
-                  <button className="glass-btn sheet-item" onClick={switchAccount}>切换账号</button>
-                  <button className="glass-btn sheet-item danger" onClick={() => setMode('delete')}>注销账号</button>
-                </>
-              )}
-
-              {mode === 'name' && (
-                <form className="sheet-form" onSubmit={saveName}>
-                  <label className="sheet-label">新的昵称</label>
-                  <input className="sheet-input" value={nameInput} maxLength={20} onChange={(e) => setNameInput(e.target.value)} placeholder="2-20 个字符" />
-                  <button className="glass-btn sheet-item" disabled={busy}>{busy ? '保存中…' : '保存昵称'}</button>
-                  <button type="button" className="glass-btn sheet-item ghost" onClick={() => { setMode(null); setMsg(''); }}>返回</button>
-                </form>
-              )}
-
-              {mode === 'delete' && (
-                <form className="sheet-form" onSubmit={deleteAccount}>
-                  <div className="sheet-warn">注销后账号无法恢复，你的帖子会保留。请输入密码确认。</div>
-                  <input className="sheet-input" type="password" value={pwdInput} onChange={(e) => setPwdInput(e.target.value)} placeholder="输入登录密码" />
-                  <button className="glass-btn sheet-item danger" disabled={busy}>{busy ? '处理中…' : '确认注销'}</button>
-                  <button type="button" className="glass-btn sheet-item ghost" onClick={() => { setMode(null); setMsg(''); }}>返回</button>
-                </form>
-              )}
-            </div>
-          </div>
         )}
 
         <div className="page-foot">

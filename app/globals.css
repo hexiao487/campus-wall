@@ -3064,3 +3064,24 @@ a.user-chip:active {
   font-size: 13px;
   border-radius: 999px;
 }
+
+/* V4.62beta 菜单挪到顶部搜索条右侧 */
+.menu-fab {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: #111;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menu-fab:active {
+  transform: scale(0.9);
+}

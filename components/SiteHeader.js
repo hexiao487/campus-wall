@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import TabBar from '@/components/TabBar';
+import AccountMenu from '@/components/AccountMenu';
 
-export default function SiteHeader({ me }) {
+export default function SiteHeader({ me, onLogout }) {
   return (
     <>
       <header className="site-header">
@@ -20,6 +21,7 @@ export default function SiteHeader({ me }) {
                 <path d="M15 15 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
               </svg>
             </Link>
+            <AccountMenu me={me} onLogout={onLogout} />
           </div>
         </div>
       </header>
