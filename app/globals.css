@@ -3215,3 +3215,10 @@ a.user-chip:active {
   color: #666;
   text-decoration: underline;
 }
+
+.me-hot {
+  display: inline-block;
+  margin: 2px 0 6px;
+  font-size: 12px;
+  color: #888;
+}
