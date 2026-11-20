@@ -3185,8 +3185,8 @@ a.user-chip:active {
 .post-video {
   display: block;
   width: 100%;
-  max-height: 460px;
-  object-fit: contain;
+  height: auto;
+  background: #000;
 }
 .post-video-badge {
   position: absolute;
