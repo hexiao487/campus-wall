@@ -52,6 +52,7 @@ const ICONS = {
 
 export default function TabBar({ me }) {
   const pathname = usePathname() || '/';
+  const hide = pathname.startsWith('/p/');
   const [unread, setUnread] = useState({ dm: 0, mention: 0 });
 
   useEffect(() => {
@@ -93,6 +94,8 @@ export default function TabBar({ me }) {
     { key: 'ptt', href: '/ptt', label: '对讲机', icon: ICONS.ptt, active: pathname.startsWith('/ptt') },
     { key: 'me', href: '/me', label: '我的', icon: ICONS.me, active: pathname.startsWith('/me') }
   ];
+
+  if (hide) return null;
 
   return (
     <nav className="tabbar-wrap" aria-label="底部导航">

@@ -2901,6 +2901,11 @@ a.user-chip:active {
   padding: 10px 0 26px;
   margin-bottom: 8px;
 }
+
+/* 帖子详情不显示底部导航，独占一屏 */
+.shell:has(.detail-top) {
+  padding-bottom: 24px;
+}
 .detail-compose input {
   flex: 1;
   padding: 12px 14px;
