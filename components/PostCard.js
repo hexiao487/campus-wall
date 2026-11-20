@@ -30,6 +30,7 @@ export default function PostCard({
   const [err, setErr] = useState('');
 
   const isAdminAuthor = post.author_role === 'admin' || !post.author_id;
+  const showAuthorBadge = isAdminAuthor && post.author_name !== '管理员';
   const isAdmin = me?.role === 'admin';
   const canDeletePost = isAdmin || (Boolean(me?.id) && post.author_id === me.id);
 
@@ -117,7 +118,7 @@ export default function PostCard({
             ) : (
               post.author_name
             )}{' '}
-            {isAdminAuthor && <span className="badge-admin">管理员</span>}
+            {showAuthorBadge && <span className="badge-admin">管理员</span>}
           </div>
           <div className="post-time">{timeAgo(post.created_at)}</div>
         </div>
