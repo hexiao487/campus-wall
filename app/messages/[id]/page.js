@@ -213,7 +213,7 @@ export default function DmRoomPage() {
         <div className={`dm-bubble ${mine ? 'mine' : ''}`}>
           {m.kind === 'text' && <div>{m.content}</div>}
           {m.kind === 'image' && (
-            <a href={m.image_url} target="_blank" rel="noreferrer">
+            <a href={imgSrc(m.image_url)} target="_blank" rel="noreferrer">
               <img className="dm-image" src={imgSrc(m.image_url)} alt="图片" />
             </a>
           )}

@@ -308,7 +308,7 @@ export default function AdminPage() {
                     </div>
                     <div className="row-sub">
                       {post.content || '（纯图片帖）'}
-                      {post.image_url ? ' [含图片]' : ''}
+                      {post.image_url ? (String(post.image_url).startsWith('video::') ? ' [含视频]' : ' [含图片]') : ''}
                     </div>
                   </div>
                   <button className="btn btn-danger btn-mini" onClick={() => deletePost(post)}>
