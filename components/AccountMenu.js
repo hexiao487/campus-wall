@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { compressImage } from '@/lib/imageCompress';
 
 export default function AccountMenu({ me, onLogout }) {
@@ -117,7 +118,7 @@ export default function AccountMenu({ me, onLogout }) {
         </svg>
       </button>
 
-      {menu && (
+      {menu && typeof document !== 'undefined' && createPortal(
         <div className="sheet-mask" onClick={close}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-bar" />
@@ -157,7 +158,8 @@ export default function AccountMenu({ me, onLogout }) {
               </form>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
