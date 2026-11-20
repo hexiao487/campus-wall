@@ -29,6 +29,7 @@ export default function MePage() {
         setMe(user);
         if (!user) return;
         load('mine');
+        preload();
       } catch {
         /* 忽略 */
       } finally {
@@ -36,6 +37,26 @@ export default function MePage() {
       }
     })();
   }, []);
+
+  async function preload() {
+    try {
+      const [sv, lk] = await Promise.all([
+        fetch('/api/saved', { cache: 'no-store' }),
+        fetch('/api/me/posts?type=liked', { cache: 'no-store' })
+      ]);
+      const sd = await sv.json().catch(() => ({}));
+      const ld = await lk.json().catch(() => ({}));
+      setSavedIds(sd.ids || []);
+      setLikedIds((ld.posts || []).map((p) => p.id));
+      setCache((c) => ({
+        mine: c.mine,
+        saved: c.saved || sd.posts || [],
+        liked: c.liked || ld.posts || []
+      }));
+    } catch {
+      /* 忽略 */
+    }
+  }
 
   async function load(which) {
     setLoading(true);
