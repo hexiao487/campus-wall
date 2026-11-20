@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
+import { readJson } from '@/lib/store';
 
 /** 单条帖子 + 全部评论 */
 export async function GET(request, { params }) {
@@ -17,6 +18,20 @@ export async function GET(request, { params }) {
     if (error) throw new Error(error.message);
     if (!post) return NextResponse.json({ error: '帖子不存在或已被删除' }, { status: 404 });
 
+    try {
+      if (post.author_id) {
+        const { data: author } = await supabase
+          .from('users')
+          .select('id, role, avatar_url')
+          .eq('id', post.author_id)
+          .maybeSingle();
+        post.author_role = author?.role || 'user';
+        post.author_avatar = author?.avatar_url || null;
+      }
+    } catch {
+      /* 忽略 */
+    }
+
     const { data: comments } = await supabase
       .from('comments')
       .select('id, post_id, author_id, author_name, content, created_at')
@@ -24,7 +39,23 @@ export async function GET(request, { params }) {
       .order('created_at', { ascending: true })
       .limit(200);
 
-    return NextResponse.json({ post, comments: comments || [] });
+    let liked = false;
+    let saved = false;
+    try {
+      const me = await getSessionUser(request);
+      if (me?.id) {
+        const [likeRow, savedRaw] = await Promise.all([
+          supabase.from('likes').select('post_id').eq('post_id', id).eq('user_id', me.id).maybeSingle(),
+          readJson(supabase, `saved:${me.id}`, [])
+        ]);
+        liked = Boolean(likeRow?.data);
+        saved = Array.isArray(savedRaw) && savedRaw.includes(id);
+      }
+    } catch {
+      /* 忽略 */
+    }
+
+    return NextResponse.json({ post, comments: comments || [], liked, saved });
   } catch (e) {
     return NextResponse.json({ error: '加载失败：' + e.message }, { status: 500 });
   }

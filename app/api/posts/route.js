@@ -32,10 +32,14 @@ export async function GET(request) {
     try {
       const ids = Array.from(new Set(rows.map((p) => p.author_id).filter(Boolean)));
       if (ids.length) {
-        const { data: authors } = await supabase.from('users').select('id, role').in('id', ids);
-        const roleMap = {};
-        for (const a of authors || []) roleMap[a.id] = a.role;
-        for (const p of rows) p.author_role = roleMap[p.author_id] || 'user';
+        const { data: authors } = await supabase.from('users').select('id, role, avatar_url').in('id', ids);
+        const infoMap = {};
+        for (const a of authors || []) infoMap[a.id] = a;
+        for (const p of rows) {
+          const a = infoMap[p.author_id];
+          p.author_role = a?.role || 'user';
+          p.author_avatar = a?.avatar_url || null;
+        }
       }
     } catch {
       /* 角色回填失败不影响帖子列表 */

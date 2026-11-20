@@ -12,7 +12,7 @@ export default function SiteHeader({ me, onLogout }) {
           <Link className="brand" href="/">
             <span className="brand-logo">墙</span>
             校园墙
-            <span className="ver-badge">V4.1</span>
+            <span className="ver-badge">V4.2</span>
           </Link>
 
           <div className="header-right">
@@ -24,9 +24,9 @@ export default function SiteHeader({ me, onLogout }) {
                 <Link className="user-chip" href={`/u/${me.id}`} title="我的主页">
                   <span
                     className="avatar"
-                    style={{ ...avatarStyle(me.username), width: 26, height: 26, borderRadius: 9, fontSize: 12 }}
+                    style={{ ...avatarStyle(me.username, me.avatar_url), width: 26, height: 26, borderRadius: 9, fontSize: 12 }}
                   >
-                    {initial(me.username)}
+                    {!me.avatar_url && initial(me.username)}
                   </span>
                   {me.username}
                   {me.role === 'admin' && <span className="badge-admin">管理员</span>}

@@ -43,10 +43,14 @@ export async function GET(request) {
     try {
       const authorIds = Array.from(new Set(posts.map((p) => p.author_id).filter(Boolean)));
       if (authorIds.length) {
-        const { data: authors } = await supabase.from('users').select('id, role').in('id', authorIds);
+        const { data: authors } = await supabase.from('users').select('id, role, avatar_url').in('id', authorIds);
         const rm = {};
-        for (const a of authors || []) rm[a.id] = a.role;
-        for (const p of posts) p.author_role = rm[p.author_id] || 'user';
+        for (const a of authors || []) rm[a.id] = a;
+        for (const p of posts) {
+          const a = rm[p.author_id];
+          p.author_role = a?.role || 'user';
+          p.author_avatar = a?.avatar_url || null;
+        }
       }
     } catch {
       /* 忽略 */

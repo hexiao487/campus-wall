@@ -31,10 +31,14 @@ export async function GET(request) {
     if (posts.length) {
       try {
         const ids = Array.from(new Set(posts.map((p) => p.author_id).filter(Boolean)));
-        const { data: authors } = await supabase.from('users').select('id, role').in('id', ids);
+        const { data: authors } = await supabase.from('users').select('id, role, avatar_url').in('id', ids);
         const map = {};
-        for (const a of authors || []) map[a.id] = a.role;
-        for (const p of posts) p.author_role = map[p.author_id] || 'user';
+        for (const a of authors || []) map[a.id] = a;
+        for (const p of posts) {
+          const a = map[p.author_id];
+          p.author_role = a?.role || 'user';
+          p.author_avatar = a?.avatar_url || null;
+        }
       } catch {
         /* 忽略角色回填失败 */
       }

@@ -8,18 +8,20 @@ export async function GET(request) {
   if (!user) return NextResponse.json({ user: null });
 
   let isMuted = false;
-  if (user.role === 'user' && user.id) {
+  let avatarUrl = null;
+  if (user.id) {
     try {
       const { data } = await getSupabase()
         .from('users')
-        .select('is_muted')
+        .select('is_muted, avatar_url')
         .eq('id', user.id)
         .maybeSingle();
       isMuted = !!data?.is_muted;
+      avatarUrl = data?.avatar_url || null;
     } catch {
       isMuted = false;
     }
   }
 
-  return NextResponse.json({ user: { ...user, isMuted } });
+  return NextResponse.json({ user: { ...user, isMuted, avatar_url: avatarUrl } });
 }
