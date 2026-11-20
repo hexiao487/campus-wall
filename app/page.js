@@ -16,7 +16,6 @@ export default function HomePage() {
   const [savedIds, setSavedIds] = useState([]);
   const [pinned, setPinned] = useState([]);
   const [tags, setTags] = useState([]);
-  const [checkin, setCheckin] = useState(null);
 
   const loadMe = useCallback(async () => {
     try {
@@ -69,8 +68,6 @@ export default function HomePage() {
           const d = await sv.json();
           setSavedIds(d.ids || []);
         }
-        const ck = await fetch('/api/checkin', { cache: 'no-store' });
-        if (ck.ok) setCheckin(await ck.json());
       } catch {
         /* 忽略 */
       }
@@ -211,22 +208,6 @@ export default function HomePage() {
     }
   }
 
-  async function doCheckin() {
-    if (!me) {
-      window.location.href = '/login';
-      return;
-    }
-    try {
-      const res = await fetch('/api/checkin', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || '签到失败');
-      setCheckin((prev) => ({ ...(prev || {}), signed: true, streak: data.streak, days: data.days }));
-      setNotice(data.already ? `今天已经签过啦，连续 ${data.streak} 天` : `签到成功，连续 ${data.streak} 天 🔥`);
-    } catch (e) {
-      setNotice(e.message);
-    }
-  }
-
   async function loadMore() {
     if (!cursor || loadingMore) return;
     setLoadingMore(true);
@@ -250,9 +231,6 @@ export default function HomePage() {
           <Link className="entry" href="/hot">🔥 热榜</Link>
           <Link className="entry" href="/search">🔍 搜索</Link>
           <Link className="entry" href="/saved">⭐ 我的收藏</Link>
-          <button className="entry" onClick={doCheckin}>
-            {checkin?.signed ? `✅ 已签到 · 连续 ${checkin.streak} 天` : '📅 今日签到'}
-          </button>
         </div>
 
         {tags.length > 0 && (
