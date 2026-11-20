@@ -187,7 +187,7 @@ export default function HomePage() {
           <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: 'var(--ink-soft)' }}>
             <Link href="/admin">管理员入口</Link>
             <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
-            <a href="/downloads/campus-wall-v1.5.apk" download>
+            <a href="/downloads/campus-wall-v3.apk" download>
               下载 Android App
             </a>
           </div>

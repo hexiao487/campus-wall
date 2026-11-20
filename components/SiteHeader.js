@@ -16,7 +16,7 @@ export default function SiteHeader({ me, onLogout }) {
           </Link>
 
           <div className="header-right">
-            <a className="header-link" href="/downloads/campus-wall-v1.5.apk" download>
+            <a className="header-link" href="/downloads/campus-wall-v3.apk" download>
               下载 App
             </a>
             {me ? (

@@ -35,8 +35,35 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
+
+        // —— 图片加载的关键修复 ——
+        settings.setLoadsImagesAutomatically(true);
+        settings.setBlockNetworkImage(false);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        }
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " CampusWallApp/1.5");
+
+        String ua = settings.getUserAgentString();
+        if (ua != null && !ua.contains("CampusWallApp")) {
+            settings.setUserAgentString(ua + " CampusWallApp/3.0");
+        }
+
+        try {
+            android.webkit.CookieManager.getInstance().setAcceptCookie(true);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
+            }
+        } catch (Exception ignored) {
+        }
 
         web.setWebChromeClient(new WebChromeClient() {
             @Override
