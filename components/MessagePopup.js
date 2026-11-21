@@ -26,7 +26,7 @@ export default function MessagePopup() {
         const list = data.conversations || [];
 
         if (!primed) {
-          list.forEach((c) => seen.current.set(c.peer.id, c.lastAt || ''));
+          list.forEach((c) => seen.current.set(c.peer.id, { lastAt: c.lastAt || '', unread: c.unread || 0 }));
           primed = true;
           return;
         }
@@ -34,9 +34,13 @@ export default function MessagePopup() {
         const fresh = [];
         list.forEach((c) => {
           const key = c.lastAt || '';
-          const old = seen.current.get(c.peer.id);
-          seen.current.set(c.peer.id, key);
-          if (key && key !== old && c.unread > 0 && !c.lastFromMe) fresh.push(c);
+          const prev = seen.current.get(c.peer.id) || { lastAt: '', unread: 0 };
+          seen.current.set(c.peer.id, { lastAt: key, unread: c.unread || 0 });
+          const unread = c.unread || 0;
+          if (unread <= 0) return;
+          const newer = unread > (prev.unread || 0);
+          const changed = key && key !== prev.lastAt && !c.lastFromMe;
+          if (newer || changed) fresh.push(c);
         });
 
         fresh.slice(0, 3).forEach((c) => {
