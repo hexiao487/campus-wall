@@ -78,6 +78,13 @@ export default function MessagesPage() {
     })();
   }, [loadMe, load]);
 
+  useEffect(() => {
+    if (!me) return;
+    const onNew = () => load();
+    window.addEventListener('cw:newdm', onNew);
+    return () => window.removeEventListener('cw:newdm', onNew);
+  }, [me, load]);
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     setMe(null);

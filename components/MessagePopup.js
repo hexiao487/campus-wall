@@ -45,6 +45,7 @@ export default function MessagePopup() {
 
         fresh.slice(0, 3).forEach((c) => {
           if (pathnameRef.current === `/messages/${c.peer.id}`) return;
+          window.dispatchEvent(new CustomEvent('cw:newdm'));
           const id = `${c.peer.id}-${Date.now()}`;
           setToasts((prev) => [...prev, { id, conv: c }].slice(-3));
           setTimeout(() => {
