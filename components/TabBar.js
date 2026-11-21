@@ -88,9 +88,17 @@ export default function TabBar({ me }) {
 
   const tabs = [
     { key: 'home', href: '/', label: '首页', icon: ICONS.home, active: pathname === '/' },
-    { key: 'chat', href: '/chat', label: '群聊', icon: ICONS.chat, active: pathname.startsWith('/chat') },
-    { key: 'friends', href: '/friends', label: '好友', icon: ICONS.friends, active: pathname.startsWith('/friends') },
-    { key: 'dm', href: '/messages', label: '消息', icon: ICONS.dm, active: pathname.startsWith('/messages'), badge: unread.dm + unread.mention },
+    {
+      key: 'dm',
+      href: '/messages',
+      label: '消息',
+      icon: ICONS.dm,
+      active:
+        pathname.startsWith('/messages') ||
+        pathname.startsWith('/chat') ||
+        pathname.startsWith('/friends'),
+      badge: unread.dm + unread.mention
+    },
     { key: 'ptt', href: '/ptt', label: '对讲机', icon: ICONS.ptt, active: pathname.startsWith('/ptt') },
     { key: 'me', href: '/me', label: '我的', icon: ICONS.me, active: pathname.startsWith('/me') }
   ];
@@ -100,7 +108,7 @@ export default function TabBar({ me }) {
   return (
     <nav className="tabbar-wrap" aria-label="底部导航">
       <div className="tabbar">
-        {tabs.slice(0, 3).map((t) => (
+        {tabs.slice(0, 2).map((t) => (
           <TabLink key={t.key} {...t} />
         ))}
 
@@ -109,7 +117,7 @@ export default function TabBar({ me }) {
           <span className="tabbar-center-label">发帖</span>
         </Link>
 
-        {tabs.slice(3).map((t) => (
+        {tabs.slice(2).map((t) => (
           <TabLink key={t.key} {...t} />
         ))}
       </div>

@@ -1,4 +1,5 @@
 import './globals.css';
+import MessagePopup from '@/components/MessagePopup';
 
 export const metadata = {
   title: '校园墙 · 说点什么吧',
@@ -15,7 +16,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        {children}
+        <MessagePopup />
+      </body>
     </html>
   );
 }
