@@ -6,7 +6,7 @@ import { avatarStyle, initial } from '@/lib/format';
 
 const TOAST_MS = 6000;
 
-/** 全局新消息提醒：SSE 实时推送私信，断线自动重连；不支持的浏览器退回轮询 */
+/** 全局新消息提醒：长轮询（服务器挂 24 秒）实现近似实时推送，失败自动重试 */
 export default function MessagePopup() {
   const router = useRouter();
   const pathname = usePathname() || '/';
@@ -15,112 +15,54 @@ export default function MessagePopup() {
   pathnameRef.current = pathname;
   const seenIds = useRef(new Set());
 
-  function pushToast(peer, content) {
+  function pushToast(peer, content, msgId) {
+    if (seenIds.current.has(msgId)) return false;
+    seenIds.current.add(msgId);
+    if (seenIds.current.size > 300) seenIds.current = new Set();
+    if (pathnameRef.current === `/messages/${peer.id}`) return false;
+
     const id = `${peer.id}-${Date.now()}`;
     setToasts((prev) => [...prev, { id, peer, content }].slice(-3));
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, TOAST_MS);
     window.dispatchEvent(new CustomEvent('cw:newdm', { detail: { peerId: peer.id } }));
+    return true;
   }
 
   useEffect(() => {
-    let es = null;
     let alive = true;
-    let fallbackTimer = null;
+    let since = '';
 
-    function handleIncoming(peer, content, msgId) {
-      window.__cwDmEvents = (window.__cwDmEvents || 0) + 1;
-      if (!alive || !peer?.id) return;
-      if (msgId) {
-        if (seenIds.current.has(msgId)) return;
-        seenIds.current.add(msgId);
-        if (seenIds.current.size > 300) seenIds.current = new Set();
-      }
-      if (pathnameRef.current === `/messages/${peer.id}`) return;
-      pushToast(peer, content);
-    }
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    function startFallback() {
-      if (fallbackTimer) return;
-      let primed = false;
-      const seen = new Map();
-      async function poll() {
+    async function loop() {
+      while (alive) {
         try {
-          const res = await fetch('/api/dm', { cache: 'no-store' });
-          if (!res.ok) return;
-          const data = await res.json().catch(() => ({}));
-          const list = data.conversations || [];
-          if (!primed) {
-            list.forEach((c) => seen.set(c.peer.id, { lastAt: c.lastAt || '', unread: c.unread || 0 }));
-            primed = true;
-            return;
-          }
-          list.forEach((c) => {
-            const prev = seen.get(c.peer.id) || { lastAt: '', unread: 0 };
-            seen.set(c.peer.id, { lastAt: c.lastAt || '', unread: c.unread || 0 });
-            const unread = c.unread || 0;
-            if (unread <= 0) return;
-            if (unread > (prev.unread || 0) || (c.lastAt && c.lastAt !== prev.lastAt && !c.lastFromMe)) {
-              handleIncoming(c.peer, c.lastMessage || '', `${c.peer.id}-${c.lastAt}`);
-            }
+          const res = await fetch(`/api/dm/watch${since ? `?since=${encodeURIComponent(since)}` : ''}`, {
+            cache: 'no-store'
           });
+          if (!alive) break;
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data.since) since = data.since;
+            for (const m of data.messages || []) {
+              if (m.peer) pushToast(m.peer, m.content, m.id);
+            }
+          } else {
+            await sleep(5000);
+          }
         } catch {
-          /* 忽略 */
+          await sleep(5000);
         }
-      }
-      poll();
-      fallbackTimer = setInterval(poll, 20000);
-    }
-
-    function stopFallback() {
-      if (fallbackTimer) {
-        clearInterval(fallbackTimer);
-        fallbackTimer = null;
+        if (alive) await sleep(200);
       }
     }
 
-    function connect() {
-      if (!alive) return;
-      if (typeof window === 'undefined' || typeof window.EventSource === 'undefined') {
-        startFallback();
-        return;
-      }
-      try {
-        es = new window.EventSource('/api/dm/stream');
-      } catch {
-        startFallback();
-        return;
-      }
-
-      window.__cwEs = es;
-      es.addEventListener('ready', () => {
-        window.__cwReady = (window.__cwReady || 0) + 1;
-        stopFallback();
-      });
-
-      es.addEventListener('dm', (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          handleIncoming(data.peer, data.content, data.id);
-        } catch {
-          /* 忽略坏数据 */
-        }
-      });
-
-      es.addEventListener('error', () => {
-        window.__cwEsErr = (window.__cwEsErr || 0) + 1;
-        startFallback();
-      });
-    }
-
-    window.__cwPopupMounted = (window.__cwPopupMounted || 0) + 1;
-    connect();
+    loop();
 
     return () => {
       alive = false;
-      stopFallback();
-      if (es) es.close();
     };
   }, []);
 
