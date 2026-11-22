@@ -93,7 +93,9 @@ export default function MessagePopup() {
         return;
       }
 
+      window.__cwEs = es;
       es.addEventListener('ready', () => {
+        window.__cwReady = (window.__cwReady || 0) + 1;
         stopFallback();
       });
 
@@ -107,6 +109,7 @@ export default function MessagePopup() {
       });
 
       es.addEventListener('error', () => {
+        window.__cwEsErr = (window.__cwEsErr || 0) + 1;
         startFallback();
       });
     }
