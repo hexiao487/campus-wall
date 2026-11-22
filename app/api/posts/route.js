@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
+import { addPoints } from '@/lib/points';
 
 const PAGE_SIZE = 20;
 const MAX_LEN = 1000;
@@ -119,6 +120,8 @@ export async function POST(request) {
       .single();
 
     if (error) throw new Error(error.message);
+
+    if (user.id) addPoints(supabase, user.id, 5).catch(() => {});
 
     // @ 提醒：写进消息表（kind=mention），被提到的人在消息页面能看到
     const mentionIds = Array.isArray(body.mentions) ? body.mentions : [];

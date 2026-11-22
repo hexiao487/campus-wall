@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
+import { addPoints } from '@/lib/points';
 
 /** 点赞 / 取消点赞 */
 export async function POST(request, { params }) {
@@ -37,9 +38,13 @@ export async function POST(request, { params }) {
 
     const { data: post } = await supabase
       .from('posts')
-      .select('like_count')
+      .select('like_count, author_id')
       .eq('id', id)
       .maybeSingle();
+
+    if (post?.author_id && post.author_id !== user.id) {
+      addPoints(supabase, post.author_id, liked ? 2 : -2).catch(() => {});
+    }
 
     return NextResponse.json({ liked, likeCount: post?.like_count ?? 0 });
   } catch (e) {

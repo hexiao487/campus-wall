@@ -157,6 +157,11 @@ export default function UserProfilePage() {
               <div className="profile-name">
                 {u.username}
                 {u.role === 'admin' && u.username !== '管理员' && <span className="badge-admin">管理员</span>}
+                {profile.score && (
+                  <span className={`lv-chip lv-${profile.score.level}`}>
+                    Lv{profile.score.level} {profile.score.name} · {profile.score.points} 积分
+                  </span>
+                )}
               </div>
               <div className="profile-sub">
                 加入于 {new Date(u.created_at).getFullYear()} 年 · {timeAgo(u.created_at)}活跃

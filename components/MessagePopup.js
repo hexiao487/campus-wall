@@ -4,64 +4,118 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { avatarStyle, initial } from '@/lib/format';
 
-/** 全局新消息弹窗：轮询私信，别人发来新消息时弹出提示 */
+const TOAST_MS = 6000;
+
+/** 全局新消息提醒：SSE 实时推送私信，断线自动重连；不支持的浏览器退回轮询 */
 export default function MessagePopup() {
   const router = useRouter();
   const pathname = usePathname() || '/';
-  const seen = useRef(new Map());
   const [toasts, setToasts] = useState([]);
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
+  const seenIds = useRef(new Set());
+
+  function pushToast(peer, content) {
+    const id = `${peer.id}-${Date.now()}`;
+    setToasts((prev) => [...prev, { id, peer, content }].slice(-3));
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, TOAST_MS);
+    window.dispatchEvent(new CustomEvent('cw:newdm', { detail: { peerId: peer.id } }));
+  }
 
   useEffect(() => {
+    let es = null;
     let alive = true;
-    let primed = false;
+    let fallbackTimer = null;
 
-    async function poll() {
-      try {
-        const res = await fetch('/api/dm', { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json().catch(() => ({}));
-        if (!alive) return;
-        const list = data.conversations || [];
+    function handleIncoming(peer, content, msgId) {
+      if (!alive || !peer?.id) return;
+      if (msgId) {
+        if (seenIds.current.has(msgId)) return;
+        seenIds.current.add(msgId);
+        if (seenIds.current.size > 300) seenIds.current = new Set();
+      }
+      if (pathnameRef.current === `/messages/${peer.id}`) return;
+      pushToast(peer, content);
+    }
 
-        if (!primed) {
-          list.forEach((c) => seen.current.set(c.peer.id, { lastAt: c.lastAt || '', unread: c.unread || 0 }));
-          primed = true;
-          return;
+    function startFallback() {
+      if (fallbackTimer) return;
+      let primed = false;
+      const seen = new Map();
+      async function poll() {
+        try {
+          const res = await fetch('/api/dm', { cache: 'no-store' });
+          if (!res.ok) return;
+          const data = await res.json().catch(() => ({}));
+          const list = data.conversations || [];
+          if (!primed) {
+            list.forEach((c) => seen.set(c.peer.id, { lastAt: c.lastAt || '', unread: c.unread || 0 }));
+            primed = true;
+            return;
+          }
+          list.forEach((c) => {
+            const prev = seen.get(c.peer.id) || { lastAt: '', unread: 0 };
+            seen.set(c.peer.id, { lastAt: c.lastAt || '', unread: c.unread || 0 });
+            const unread = c.unread || 0;
+            if (unread <= 0) return;
+            if (unread > (prev.unread || 0) || (c.lastAt && c.lastAt !== prev.lastAt && !c.lastFromMe)) {
+              handleIncoming(c.peer, c.lastMessage || '', `${c.peer.id}-${c.lastAt}`);
+            }
+          });
+        } catch {
+          /* 忽略 */
         }
+      }
+      poll();
+      fallbackTimer = setInterval(poll, 20000);
+    }
 
-        const fresh = [];
-        list.forEach((c) => {
-          const key = c.lastAt || '';
-          const prev = seen.current.get(c.peer.id) || { lastAt: '', unread: 0 };
-          seen.current.set(c.peer.id, { lastAt: key, unread: c.unread || 0 });
-          const unread = c.unread || 0;
-          if (unread <= 0) return;
-          const newer = unread > (prev.unread || 0);
-          const changed = key && key !== prev.lastAt && !c.lastFromMe;
-          if (newer || changed) fresh.push(c);
-        });
-
-        fresh.slice(0, 3).forEach((c) => {
-          if (pathnameRef.current === `/messages/${c.peer.id}`) return;
-          window.dispatchEvent(new CustomEvent('cw:newdm'));
-          const id = `${c.peer.id}-${Date.now()}`;
-          setToasts((prev) => [...prev, { id, conv: c }].slice(-3));
-          setTimeout(() => {
-            setToasts((prev) => prev.filter((t) => t.id !== id));
-          }, 6000);
-        });
-      } catch {
-        /* 轮询失败忽略 */
+    function stopFallback() {
+      if (fallbackTimer) {
+        clearInterval(fallbackTimer);
+        fallbackTimer = null;
       }
     }
 
-    poll();
-    const t = setInterval(poll, 15000);
+    function connect() {
+      if (!alive) return;
+      if (typeof window === 'undefined' || typeof window.EventSource === 'undefined') {
+        startFallback();
+        return;
+      }
+      try {
+        es = new window.EventSource('/api/dm/stream');
+      } catch {
+        startFallback();
+        return;
+      }
+
+      es.addEventListener('ready', () => {
+        stopFallback();
+      });
+
+      es.addEventListener('dm', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          handleIncoming(data.peer, data.content, data.id);
+        } catch {
+          /* 忽略坏数据 */
+        }
+      });
+
+      es.addEventListener('error', () => {
+        startFallback();
+      });
+    }
+
+    connect();
+
     return () => {
       alive = false;
-      clearInterval(t);
+      stopFallback();
+      if (es) es.close();
     };
   }, []);
 
@@ -69,26 +123,25 @@ export default function MessagePopup() {
 
   return (
     <div className="msg-pop-layer" aria-live="polite">
-      {toasts.map(({ id, conv }) => (
+      {toasts.map(({ id, peer, content }) => (
         <button
           className="msg-pop"
           key={id}
           onClick={() => {
             setToasts((prev) => prev.filter((t) => t.id !== id));
-            router.push(`/messages/${conv.peer.id}`);
+            router.push(`/messages/${peer.id}`);
           }}
         >
-          <span className="avatar msg-pop-avatar" style={avatarStyle(conv.peer.username, conv.peer.avatar_url)}>
-            {conv.peer.avatar_url ? '' : initial(conv.peer.username)}
+          <span className="avatar msg-pop-avatar" style={avatarStyle(peer.username, peer.avatar_url)}>
+            {peer.avatar_url ? '' : initial(peer.username)}
           </span>
           <span className="msg-pop-main">
             <span className="msg-pop-title">
-              {conv.peer.username}
-              {conv.peer.role === 'admin' && conv.peer.username !== '管理员' && (
-                <span className="badge-admin">管理员</span>
-              )}
+              {peer.username}
+              {peer.role === 'admin' && peer.username !== '管理员' && <span className="badge-admin">管理员</span>}
+              <span className="msg-pop-live">新消息</span>
             </span>
-            <span className="msg-pop-text">{conv.lastMessage}</span>
+            <span className="msg-pop-text">{content}</span>
           </span>
           <span className="msg-pop-reply">回复 ›</span>
         </button>

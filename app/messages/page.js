@@ -102,7 +102,7 @@ export default function MessagesPage() {
         <div className="hero">
           <div>
             <h1 className="room-title">消息</h1>
-            <div className="room-sub">私信、群聊、好友都收在这里</div>
+            <div className="room-sub">私信、群聊、好友都在这里 · 新消息实时提醒</div>
           </div>
         </div>
 

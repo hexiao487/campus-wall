@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
 import { relationship } from '@/lib/social';
+import { getUserRecord, scoreOf } from '@/lib/points';
 
 /** 单个用户主页信息：资料 + 关注/粉丝/帖子数 + 与我的关系 */
 export async function GET(request, { params }) {
@@ -28,8 +29,12 @@ export async function GET(request, { params }) {
       relationship(supabase, me?.id || null, id)
     ]);
 
+    const rec = await getUserRecord(supabase, id);
+    const score = scoreOf(rec);
+
     return NextResponse.json({
       user,
+      score: { ...score, checkin: rec.checkin },
       stats: {
         posts: posts.count || 0,
         followers: followers.count || 0,

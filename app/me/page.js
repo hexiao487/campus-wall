@@ -20,6 +20,9 @@ export default function MePage() {
   const [loading, setLoading] = useState(true);
   const [savedIds, setSavedIds] = useState([]);
   const [likedIds, setLikedIds] = useState([]);
+  const [score, setScore] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [checkMsg, setCheckMsg] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -30,6 +33,7 @@ export default function MePage() {
         if (!user) return;
         load('mine');
         preload();
+        loadScore();
       } catch {
         /* 忽略 */
       } finally {
@@ -37,6 +41,37 @@ export default function MePage() {
       }
     })();
   }, []);
+
+  async function loadScore() {
+    try {
+      const res = await fetch('/api/points', { cache: 'no-store' });
+      const data = await res.json();
+      if (res.ok && data.level) setScore(data);
+    } catch {
+      /* 忽略 */
+    }
+  }
+
+  async function doCheckin() {
+    if (checking || !score) return;
+    setChecking(true);
+    setCheckMsg('');
+    try {
+      const res = await fetch('/api/points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'checkin' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '签到失败');
+      setCheckMsg(data.already ? '今天已经签到过啦' : `签到成功 +${data.earned} 积分`);
+      await loadScore();
+    } catch (e) {
+      setCheckMsg(e.message);
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function preload() {
     try {
@@ -117,7 +152,7 @@ export default function MePage() {
                   {me.username}
                   {me.role === 'admin' && <span className="badge-admin">管理员</span>}
                 </h1>
-                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V5.31beta</span></p>
+                <p>{me.id ? '我的个人页面' : ''} <span className="ver-badge">V6.0beta</span></p>
                 <Link className="me-hot" href="/hot">🔥 热榜 ›</Link>
                 <div className="me-stats">
                   <span><b>{cache.mine ? cache.mine.length : '—'}</b> 帖子</span>
@@ -127,6 +162,39 @@ export default function MePage() {
               </div>
               <Link className="me-go" href={`/u/${me.id}`}>主页 ›</Link>
             </div>
+
+            {score && (
+              <div className="lv-card">
+                <div className="lv-head">
+                  <span className={`lv-orb lv-${score.level}`}>Lv{score.level}</span>
+                  <div className="lv-main">
+                    <div className="lv-name">
+                      {score.name}
+                      <span className="lv-points">{score.points} 积分</span>
+                    </div>
+                    <div className="lv-bar">
+                      <i style={{ width: `${score.progress}%` }} />
+                    </div>
+                    <div className="lv-sub">
+                      {score.next ? `再 ${score.need} 积分升到 Lv${score.level + 1}` : '已到最高等级'}
+                    </div>
+                  </div>
+                  <button
+                    className={`lv-check ${score.checkin?.todayDone ? 'done' : ''}`}
+                    onClick={doCheckin}
+                    disabled={checking || score.checkin?.todayDone}
+                  >
+                    {score.checkin?.todayDone ? '今日已签' : checking ? '签到中…' : '签到 +3'}
+                  </button>
+                </div>
+                <div className="lv-foot">
+                  <span>连续签到 <b>{score.checkin?.streak || 0}</b> 天</span>
+                  <span>累计 <b>{score.checkin?.total || 0}</b> 次</span>
+                  <span className="lv-rule">发帖 +5 · 评论 +2 · 获赞 +2 · 连签 7 天额外 +10</span>
+                </div>
+                {checkMsg && <div className="lv-msg">{checkMsg}</div>}
+              </div>
+            )}
 
             <div className="me-tabs">
               {TABS.map((t) => (

@@ -80,9 +80,12 @@ export default function TabBar({ me }) {
     }
     poll();
     const t = setInterval(poll, 25000);
+    const onNew = () => poll();
+    window.addEventListener('cw:newdm', onNew);
     return () => {
       alive = false;
       clearInterval(t);
+      window.removeEventListener('cw:newdm', onNew);
     };
   }, [me, pathname]);
 

@@ -22,6 +22,11 @@ export default function PostDetailPage() {
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState('');
   const [viewer, setViewer] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [sort, setSort] = useState('new');
+  const [authorScore, setAuthorScore] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -40,6 +45,12 @@ export default function PostDetailPage() {
         setComments(data.comments || []);
         setLiked(Boolean(data.liked));
         setSaved(Boolean(data.saved));
+        if (data.post?.author_id) {
+          fetch(`/api/points?id=${data.post.author_id}`, { cache: 'no-store' })
+            .then((x) => x.json())
+            .then((x) => setAuthorScore(x.level ? x : null))
+            .catch(() => {});
+        }
       } catch (e) {
         setNotice(e.message);
       } finally {
@@ -117,6 +128,43 @@ export default function PostDetailPage() {
     }
   }
 
+  async function saveEdit() {
+    const content = editText.trim();
+    if (savingEdit) return;
+    if (!content && !post?.image_url) return setNotice('正文不能为空');
+    setSavingEdit(true);
+    setNotice('');
+    try {
+      const res = await fetch(`/api/posts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '编辑失败');
+      setPost((p) => ({ ...p, content: data.post.content }));
+      setEditing(false);
+    } catch (e) {
+      setNotice(e.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function toggleCommentLike(c) {
+    if (!me) return (window.location.href = '/login');
+    try {
+      const res = await fetch(`/api/comments/${c.id}/like`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '点赞失败');
+      setComments((prev) =>
+        prev.map((x) => (x.id === c.id ? { ...x, liked_me: data.liked, like_count: data.likeCount } : x))
+      );
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+
   async function removePost() {
     if (!window.confirm('确定删除这条帖子吗？')) return;
     try {
@@ -165,10 +213,24 @@ export default function PostDetailPage() {
                 <b>
                   {post.author_name}
                   {showBadge && <span className="badge-admin">管理员</span>}
+                  {authorScore && <span className={`lv-chip lv-${authorScore.level}`}>Lv{authorScore.level} {authorScore.name}</span>}
                 </b>
                 <span>{timeAgo(post.created_at)}</span>
               </div>
-              {canDelete && <button className="detail-del" onClick={removePost}>删除</button>}
+              {canDelete && (
+                <span className="detail-owner-actions">
+                  <button
+                    className="detail-edit"
+                    onClick={() => {
+                      setEditText(post.content || '');
+                      setEditing(true);
+                    }}
+                  >
+                    编辑
+                  </button>
+                  <button className="detail-del" onClick={removePost}>删除</button>
+                </span>
+              )}
             </div>
 
             {video && (
@@ -210,7 +272,28 @@ export default function PostDetailPage() {
               </div>
             )}
 
-            {post.content && <p className="detail-body">{post.content}</p>}
+            {editing ? (
+              <div className="detail-editor">
+                <textarea
+                  value={editText}
+                  maxLength={1000}
+                  onChange={(e) => setEditText(e.target.value)}
+                  placeholder="改点什么…"
+                  rows={5}
+                />
+                <div className="detail-editor-bar">
+                  <span>{editText.length}/1000</span>
+                  <span className="detail-editor-actions">
+                    <button className="btn btn-ghost btn-mini" onClick={() => setEditing(false)} disabled={savingEdit}>取消</button>
+                    <button className="btn btn-primary btn-mini" onClick={saveEdit} disabled={savingEdit}>
+                      {savingEdit ? '保存中…' : '保存修改'}
+                    </button>
+                  </span>
+                </div>
+              </div>
+            ) : (
+              post.content && <p className="detail-body">{post.content}</p>
+            )}
 
             <div className="detail-actions">
               <button className={`detail-act ${liked ? 'on' : ''}`} onClick={toggleLike}>
@@ -225,17 +308,35 @@ export default function PostDetailPage() {
             </div>
 
             <section className="detail-comments">
-              <div className="detail-comments-title">共 {comments.length} 条评论</div>
+              <div className="detail-comments-head">
+                <div className="detail-comments-title">共 {comments.length} 条评论</div>
+                {comments.length > 1 && (
+                  <div className="comment-sort">
+                    <button className={sort === 'new' ? 'on' : ''} onClick={() => setSort('new')}>最新</button>
+                    <button className={sort === 'hot' ? 'on' : ''} onClick={() => setSort('hot')}>最热</button>
+                  </div>
+                )}
+              </div>
               {comments.length === 0 && <div className="post-time">还没有评论，来做第一个评论的人。</div>}
-              {comments.map((c) => (
+              {(sort === 'hot' ? [...comments].sort((a, b) => (b.like_count || 0) - (a.like_count || 0)) : comments).map((c) => (
                 <div className="comment-row" key={c.id}>
                   <span className="avatar mini" style={avatarStyle(c.author_name)}>{initial(c.author_name)}</span>
                   <div className="comment-main">
                     <div className="comment-name">{c.author_name}<span className="comment-time">{timeAgo(c.created_at)}</span></div>
                     <div className="comment-body">{c.content}</div>
-                    {(me?.role === 'admin' || (me?.id && c.author_id === me.id)) && (
-                      <button className="comment-del" onClick={() => removeComment(c)}>删除</button>
-                    )}
+                    <div className="comment-bar">
+                      <button
+                        className={`comment-like ${c.liked_me ? 'on' : ''}`}
+                        onClick={() => toggleCommentLike(c)}
+                        aria-label="赞这条评论"
+                      >
+                        {c.liked_me ? '♥' : '♡'} {c.like_count || 0}
+                        {(c.like_count || 0) >= 3 && <span className="comment-hot">热评</span>}
+                      </button>
+                      {(me?.role === 'admin' || (me?.id && c.author_id === me.id)) && (
+                        <button className="comment-del" onClick={() => removeComment(c)}>删除</button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

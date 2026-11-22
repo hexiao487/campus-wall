@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getSessionUser } from '@/lib/auth';
+import { addPoints } from '@/lib/points';
 
 const MAX_LEN = 300;
 
@@ -53,6 +54,8 @@ export async function POST(request, { params }) {
       .single();
 
     if (error) throw new Error(error.message);
+
+    if (user.id) addPoints(supabase, user.id, 2).catch(() => {});
 
     return NextResponse.json({ comment: created });
   } catch (e) {
