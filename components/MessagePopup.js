@@ -30,6 +30,7 @@ export default function MessagePopup() {
     let fallbackTimer = null;
 
     function handleIncoming(peer, content, msgId) {
+      window.__cwDmEvents = (window.__cwDmEvents || 0) + 1;
       if (!alive || !peer?.id) return;
       if (msgId) {
         if (seenIds.current.has(msgId)) return;
@@ -110,6 +111,7 @@ export default function MessagePopup() {
       });
     }
 
+    window.__cwPopupMounted = (window.__cwPopupMounted || 0) + 1;
     connect();
 
     return () => {
