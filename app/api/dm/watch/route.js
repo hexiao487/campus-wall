@@ -50,20 +50,26 @@ export async function GET(request) {
     }
 
     const startedAt = Date.now();
+    const sinceMs = new Date(since).getTime();
     let rows = null;
+
     while (Date.now() - startedAt < HOLD) {
       const { data, error } = await supabase
         .from('dm_messages')
         .select('id, sender_id, kind, content, created_at')
         .eq('receiver_id', me.id)
-        .gt('created_at', since)
-        .neq('kind', 'mention')
-        .order('created_at', { ascending: true })
-        .limit(10);
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) throw new Error(error.message);
-      if (data?.length) {
-        rows = data;
+
+      // 时间比较放在 JS 里做，避免数据库时间精度 / 时区差异导致漏消息
+      const fresh = (data || [])
+        .filter((m) => m.kind !== 'mention' && new Date(m.created_at).getTime() > sinceMs)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+      if (fresh.length) {
+        rows = fresh;
         break;
       }
       await new Promise((r) => setTimeout(r, TICK));
