@@ -30,6 +30,16 @@ export async function GET(request) {
     const url = new URL(request.url);
     let since = url.searchParams.get('since') || '';
 
+    if (url.searchParams.get('debug')) {
+      const { data, error } = await supabase
+        .from('dm_messages')
+        .select('id, created_at, kind')
+        .eq('receiver_id', me.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      return NextResponse.json({ meId: me.id, count: data?.length || 0, rows: data || [], error: error?.message || null });
+    }
+
     const latest = async () => {
       const { data } = await supabase
         .from('dm_messages')
