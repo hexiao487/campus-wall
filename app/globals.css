@@ -3378,7 +3378,7 @@ a.user-chip:active {
   }
 }
 
-/* V6.0beta：等级积分 / 帖子编辑 / 评论点赞 / 实时消息 */
+/* V5.4beta：等级积分 / 帖子编辑 / 评论点赞 / 实时消息 */
 .lv-chip {
   display: inline-flex;
   align-items: center;
