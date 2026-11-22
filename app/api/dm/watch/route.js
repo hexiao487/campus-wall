@@ -29,15 +29,24 @@ export async function GET(request) {
     const supabase = getSupabase();
     const url = new URL(request.url);
     let since = url.searchParams.get('since') || '';
-    if (!since || Number.isNaN(new Date(since).getTime())) {
+
+    const latest = async () => {
       const { data } = await supabase
         .from('dm_messages')
         .select('created_at')
         .eq('receiver_id', me.id)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      since = data?.created_at || new Date().toISOString();
+        .limit(1);
+      return data?.[0]?.created_at || new Date().toISOString();
+    };
+
+    // 桥接请求：只返回数据库里的最新水位，客户端拿到后立刻进入长轮询
+    if (url.searchParams.get('bridge')) {
+      return NextResponse.json({ messages: [], since: await latest() });
+    }
+
+    if (!since || Number.isNaN(new Date(since).getTime())) {
+      since = await latest();
     }
 
     const startedAt = Date.now();

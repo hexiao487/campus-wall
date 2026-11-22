@@ -37,6 +37,15 @@ export default function MessagePopup() {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     async function loop() {
+      try {
+        const init = await fetch('/api/dm/watch?bridge=1', { cache: 'no-store' });
+        if (init.ok) {
+          const d = await init.json().catch(() => ({}));
+          if (d.since) since = d.since;
+        }
+      } catch {
+        /* 桥接失败也没关系，下面循环会自动兜底 */
+      }
       while (alive) {
         try {
           const res = await fetch(`/api/dm/watch${since ? `?since=${encodeURIComponent(since)}` : ''}`, {
