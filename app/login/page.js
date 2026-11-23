@@ -121,9 +121,9 @@ export default function LoginPage() {
     <div className="auth-wrap">
       <div style={{ marginBottom: 22 }}>
         <Link className="brand" href="/">
-          <span className="brand-logo">墙</span>
-          校园墙
-          <span className="ver-badge">V5.4beta</span>
+          <span className="brand-logo">回</span>
+          回声
+          <span className="ver-badge">V5.41beta</span>
         </Link>
       </div>
 

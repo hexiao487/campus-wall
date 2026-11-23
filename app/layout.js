@@ -2,7 +2,7 @@ import './globals.css';
 import MessagePopup from '@/components/MessagePopup';
 
 export const metadata = {
-  title: '校园墙 · 说点什么吧',
+  title: '回声 · 校园里的公开小墙',
   description: '校园里的公开小墙，匿名发帖、点赞、评论。'
 };
 

@@ -186,8 +186,8 @@ export default function AdminPage() {
       <div className="auth-wrap">
         <div style={{ marginBottom: 20 }}>
           <Link className="brand" href="/">
-            <span className="brand-logo">墙</span>
-            校园墙 · 管理后台
+            <span className="brand-logo">回</span>
+            回声 · 管理后台
           </Link>
         </div>
 
@@ -227,7 +227,7 @@ export default function AdminPage() {
           )}
 
           <div className="auth-foot">
-            <Link href="/">← 返回校园墙</Link>
+            <Link href="/">← 返回回声</Link>
           </div>
         </div>
       </div>

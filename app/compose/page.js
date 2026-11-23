@@ -27,7 +27,7 @@ export default function ComposePage() {
     loadMe();
     try {
       if (new URLSearchParams(window.location.search).get('invite')) {
-        setInviteText('想认识新朋友，来校园墙聊两句吧～ #校园墙');
+        setInviteText('想认识新朋友，来回声聊两句吧～ #回声');
       }
     } catch {
       /* 忽略 */
